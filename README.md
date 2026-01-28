@@ -1,8 +1,6 @@
-# Limine C Template
+# Goonix
 
-This repository will demonstrate how to set up a basic kernel in C using Limine.
-
-## How to use this?
+Un\*x for g\*\*ns
 
 ### Dependencies
 
