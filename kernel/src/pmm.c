@@ -1,5 +1,5 @@
 #include "pmm.h"
-
+#include <stddef.h>
 
 void pmm_init(struct limine_memmap_response memap) {
 

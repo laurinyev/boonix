@@ -1,31 +1,23 @@
 #include "tty.h"
 #include <stdbool.h>
 
-#include <third_party/flanterm/src/flanterm.h>
-#include <third_party/flanterm/src/flanterm_backends/fb.h>
+#include "cpu_stuffs.h"
 
-struct flanterm_context* ft_ctx = NULL;
-
+#define COM1 0x3f8
 
 void tty_fb_init(struct limine_framebuffer* fb){
-    ft_ctx = flanterm_fb_init(
-        NULL,
-        NULL,
-        fb->address, fb->width, fb->height, fb->pitch,
-        fb->red_mask_size, fb->red_mask_shift,
-        fb->blue_mask_size, fb->green_mask_shift,
-        fb->green_mask_size, fb->blue_mask_shift,
-        NULL,
-        NULL, NULL,
-        NULL, NULL,
-        NULL, NULL,
-        NULL, 0, 0, 1,
-        0, 0,
-        0,0
-    );
+    outb(COM1 + 1, 0x00);
+    outb(COM1 + 3, 0x80);
+    outb(COM1 + 0, 0x03);
+    outb(COM1 + 1, 0x00);
+    outb(COM1 + 3, 0x03);
+    outb(COM1 + 2, 0xC7);
+    outb(COM1 + 4, 0x0B);
+    outb(COM1 + 4, 0x0F); //lets just not test it and let it explode if it doesnt work
+
 }
 void tty_write(char* buf, size_t len){
-    if (ft_ctx) {
-        flanterm_write(ft_ctx, buf, len);
+    for(int i = 0; i < len; i++){
+        outb(COM1,buf[i]);
     }
 }
