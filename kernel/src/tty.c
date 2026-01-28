@@ -5,7 +5,7 @@
 
 #define COM1 0x3f8
 
-void tty_fb_init(struct limine_framebuffer* fb){
+void tty_init(){
     outb(COM1 + 1, 0x00);
     outb(COM1 + 3, 0x80);
     outb(COM1 + 0, 0x03);
