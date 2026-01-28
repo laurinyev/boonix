@@ -5,6 +5,7 @@
 #include "garbage.h"
 #include "cpu_stuffs.h"
 #include "tty.h"
+#include "printf.h"
 
 __attribute__((used, section(".limine_requests")))
 static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(4);
@@ -35,8 +36,7 @@ void kmain(void) {
     load_gdt();
     tty_fb_init(framebuffer_request.response->framebuffers[0]);
 
-    //test stuffs
-    tty_write("Thank you Nekodev <3", sizeof("Thank you Nekodev <3"));
+    kprintf("Thank you Nekodev <3");
 
     hcf();
 }

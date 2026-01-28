@@ -16,8 +16,6 @@ void tty_fb_init(struct limine_framebuffer* fb){
     outb(COM1 + 4, 0x0F); //lets just not test it and let it explode if it doesnt work
 
 }
-void tty_write(char* buf, size_t len){
-    for(int i = 0; i < len; i++){
-        outb(COM1,buf[i]);
-    }
+void tty_putc(char c, void* unused){
+    outb(COM1,c);
 }
