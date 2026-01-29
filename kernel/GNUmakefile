@@ -76,6 +76,7 @@ override CFLAGS += \
     -fno-stack-check \
     -fno-lto \
     -fno-PIC \
+    -fno-pie \
     -ffunction-sections \
     -fdata-sections
 

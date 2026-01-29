@@ -5,7 +5,7 @@
 ARCH := x86_64
 
 # Default user QEMU flags. These are appended to the QEMU command calls.
-QEMUFLAGS := -m 2g -display none -serial stdio 
+QEMUFLAGS := -m 128m -display none -serial stdio 
 
 override IMAGE_NAME := template-$(ARCH)
 

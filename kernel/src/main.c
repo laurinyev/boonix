@@ -18,8 +18,9 @@ static volatile struct limine_memmap_request memmap_req = {
 };
 
 __attribute__((used, section(".limine_requests")))
-static volatile struct limine_hhdm_request hhdm_req = {
-    .id = LIMINE_HHDM_REQUEST_ID,
+static volatile struct limine_hhdm_request hhdm_req = 
+{
+    .id = LIMINE_HHDM_REQUEST_ID, 
     .revision = 0
 };
 
@@ -46,10 +47,11 @@ void kmain(void) {
         hcf();
     }
 
-   //if (framebuffer_request.response == NULL
-   //  || framebuffer_request.response->framebuffer_count < 1) {
-   //     hcf();
-   //}
+   
+    //if (framebuffer_request.response == NULL
+    //  || framebuffer_request.response->framebuffer_count < 1) {
+    //     hcf();
+    //}
 
     if (memmap_req.response == NULL) {
         kprintf("ERROR! no memory map\n");
@@ -61,13 +63,21 @@ void kmain(void) {
         hcf(); // no ~~bitches~~ hhdm offset
     }
 
-    kprintf("HHDM offset: 0x%x\n",hhdm_req.response->offset);
-
     hhdm_offset = hhdm_req.response->offset;
+    kprintf("HHDM offset: 0x%llx\n",hhdm_offset);
 
     pmm_init(memmap_req.response);
 
-    kprintf("Thank you %s <3","NekoDev");
+    void* p = pmm_alloc();
+    kprintf("allocated 0x%llx\n",p);
+    pmm_free(p);
+    kprintf("freed 0x%llx\n",p);
+    p = pmm_alloc();
+    kprintf("allocated 0x%llx\n",p);
+    p = pmm_alloc();
+    kprintf("allocated 0x%llx\n",p);
+
+    kprintf("Thank you %s <3","Nekodev");
 
     hcf();
 }
