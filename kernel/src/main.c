@@ -7,6 +7,7 @@
 #include "tty.h"
 #include "pmm.h"
 #include "printf.h"
+#include "memstress.h"
 
 __attribute__((used, section(".limine_requests")))
 static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(4);
@@ -68,14 +69,7 @@ void kmain(void) {
 
     pmm_init(memmap_req.response);
 
-    void* p = pmm_alloc();
-    kprintf("allocated 0x%llx\n",p);
-    pmm_free(p);
-    kprintf("freed 0x%llx\n",p);
-    p = pmm_alloc();
-    kprintf("allocated 0x%llx\n",p);
-    p = pmm_alloc();
-    kprintf("allocated 0x%llx\n",p);
+    memstress_test();
 
     kprintf("Thank you %s <3","Nekodev");
 

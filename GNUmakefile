@@ -6,6 +6,7 @@ ARCH := x86_64
 
 # Default user QEMU flags. These are appended to the QEMU command calls.
 QEMUFLAGS := -m 128m -display none -serial stdio 
+QEMUFLAG_DBG := -d int -no-shutdown -no-reboot
 
 override IMAGE_NAME := template-$(ARCH)
 
@@ -25,8 +26,20 @@ all-hdd: $(IMAGE_NAME).hdd
 .PHONY: run
 run: run-$(ARCH)
 
+.PHONY: debug
+debug: debug-$(ARCH)
+
 .PHONY: run-hdd
 run-hdd: run-hdd-$(ARCH)
+
+.PHONY: debug-x86_64
+debug-x86_64: edk2-ovmf $(IMAGE_NAME).iso
+	qemu-system-$(ARCH) \
+		-M q35 \
+		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-$(ARCH).fd,readonly=on \
+		-cdrom $(IMAGE_NAME).iso \
+		$(QEMUFLAGS) \
+        $(QEMUFLAG_DBG)
 
 .PHONY: run-x86_64
 run-x86_64: edk2-ovmf $(IMAGE_NAME).iso
@@ -137,6 +150,15 @@ run-hdd-bios: $(IMAGE_NAME).hdd
 		-M q35 \
 		-hda $(IMAGE_NAME).hdd \
 		$(QEMUFLAGS)
+
+.PHONY: debug-bios
+debug-bios: $(IMAGE_NAME).iso
+	qemu-system-$(ARCH) \
+		-M q35 \
+		-cdrom $(IMAGE_NAME).iso \
+		-boot d \
+		$(QEMUFLAGS) \
+        $(QEMUFLAG_DBG)
 
 edk2-ovmf:
 	curl -L https://github.com/osdev0/edk2-ovmf-nightly/releases/latest/download/edk2-ovmf.tar.gz | gunzip | tar -xf -
