@@ -65,7 +65,7 @@ void kmain(void) {
     }
 
     hhdm_offset = hhdm_req.response->offset;
-    kprintf("HHDM offset: 0x%llx\n",hhdm_offset);
+    //kprintf("HHDM offset: 0x%llx\n",hhdm_offset);
 
     pmm_init(memmap_req.response);
 

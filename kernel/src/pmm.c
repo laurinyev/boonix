@@ -87,7 +87,7 @@ void pmm_init(struct limine_memmap_response* memmap) {
     uint64_t highest_end = 0;
     for(size_t i = 0; i < memmap->entry_count; i++){
         struct limine_memmap_entry* e = memmap->entries[i];
-        kprintf("Memory map entry at 0x%x with size 0x%x and type 0x%x!\n",e->base,e->length,e->type);
+        //kprintf("Memory map entry at 0x%x with size 0x%x and type 0x%x!\n",e->base,e->length,e->type);
         if (e->type == LIMINE_MEMMAP_USABLE){
             total_mem += e->length;
             if (e->length > largest->length){
