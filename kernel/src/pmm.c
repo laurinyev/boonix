@@ -75,7 +75,7 @@ static void unmark_region(uintptr_t start, uintptr_t size) {
     bitmap_ptr[last_byte]  &= ~last_mask;
 
     if (first_byte + 1 < last_byte) {
-        memset(bitmap_ptr + first_byte + 1, 0xFF, last_byte - first_byte - 1);
+        memset(bitmap_ptr + first_byte + 1, 0x01, last_byte - first_byte - 1);
     }
 }
 
@@ -120,6 +120,7 @@ void pmm_init(struct limine_memmap_response* memmap) {
     for(size_t i = 0; i < memmap->entry_count; i++){
         struct limine_memmap_entry* e = memmap->entries[i];
         if (e->type == LIMINE_MEMMAP_USABLE && e->base >= usable_mem_start && e->base + e->length <= usable_mem_start + total_range) {
+            //kprintf("unmarking 0x%x pages at 0x%llx\n",e->length/PAGE_SIZE,PURE(e->base));
             unmark_region(PURE(e->base),e->length/PAGE_SIZE);
         }
     }

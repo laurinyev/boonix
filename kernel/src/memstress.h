@@ -2,7 +2,7 @@
 #define __MEMSTRESS_H__
 
 #define PAGE_SIZE 4096
-#define MAX_PAGES 8192   // adjust to stress your system
+#define MAX_PAGES 65535   // adjust to stress your system
 #define PAT1 0xAA
 #define PAT2 0x55
 
