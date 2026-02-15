@@ -4,7 +4,11 @@ use std::{
 
 mod interp {
     use {
-        std::env::*
+        std::{
+            env::*,
+            process::*
+        }
+
     };
     #[derive(Debug)]
     #[allow(dead_code)]
@@ -52,8 +56,11 @@ mod interp {
                         }; 
                     }
                 },
+                "exit" => {
+                    exit(0); 
+                }
                 _ => {
-                    println!("no such builtin!(TODO: binary invocation)")
+                    println!("command not found: \"{v}\"(TODO: binary invocation)")
                 }
             }
         }
@@ -108,6 +115,11 @@ fn main() {
     if args.len() < 2 {
         repl::run();
     } else if args.len() < 4 {
-        println!("script: {}", args.nth(1).unwrap());
+        let second_arg  = args.nth(1).unwrap();
+        if second_arg == "--help" {
+            println!("just run the shell lmao, not like I have any options xD");
+        } else {
+            println!("script: {}", second_arg);
+        }
     }
 }
