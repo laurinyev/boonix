@@ -3,6 +3,9 @@ use std::{
 };
 
 mod interp {
+    use {
+        std::env::*
+    };
     #[derive(Debug)]
     #[allow(dead_code)]
     enum LexToken<'a>{
@@ -27,14 +30,40 @@ mod interp {
     }
 
     pub fn run(cmd: &str) -> u32 {
-        println!("{:?}",lex(cmd));
+        let lexed = lex(cmd);
+
+        if lexed.len() == 0 {
+            return 0;
+        }
+
+        #[allow(irrefutable_let_patterns)] // lol whut, why does this lang hate temporary stuff so much?
+        if let LexToken::Word(v) = lexed[0] {
+            match v {
+                "cd" => {
+                    #[allow(irrefutable_let_patterns)] // lol whut, why does this lang hate temporary stuff so much?
+                    if let LexToken::Word(v) = lexed[1] {
+                        match set_current_dir(v) {
+                            Ok(..) => unsafe {
+                                set_var("PWD",current_dir().unwrap());
+                            },
+                            Err(e) => {
+                                println!("Couldn't change directory: {e}");
+                            }
+                        }; 
+                    }
+                },
+                _ => {
+                    println!("no such builtin!(TODO: binary invocation)")
+                }
+            }
+        }
+
 
         return 0;
     }    
 }
 
 mod repl {
-    
     use {
         std::{
             env::*, 
@@ -51,10 +80,10 @@ mod repl {
             Err(..) => {
                 match var("PWD") {
                     Ok(v) => {
-                        print!("{}>",v);
+                        print!("{}> ",v);
                     },
                     Err(..) => {
-                        print!(">");
+                        print!("> ");
                     }
                 } 
             }
