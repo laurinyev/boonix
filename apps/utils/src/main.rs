@@ -1,3 +1,5 @@
+mod whoami; 
+
 use {
     std::{
         env::*,
@@ -18,6 +20,7 @@ fn invoke_util(args: Vec<String>){
         "false" => {
             exit(1);
         },
+        "whoami" => whoami::run(),
         _ => {
             help();
         }
