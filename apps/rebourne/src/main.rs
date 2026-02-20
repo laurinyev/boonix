@@ -2,18 +2,22 @@ use std::{
     env::*,
 };
 
-mod interp {
-    use {
-        std::{
-            env::*,
-            process::*
-        }
-
-    };
-    #[derive(Debug)]
-    #[allow(dead_code)]
+mod parser {
+    #[derive(Debug ,PartialEq, Eq)]
     enum LexToken<'a>{
-        Word(&'a str)
+        Word(&'a str),
+        Newline,
+        Semicolon
+    }
+
+    #[derive(Debug,PartialEq, Eq)]
+    pub enum AstNode<'a> {
+        Root(Vec<AstNode<'a>>),
+        ConstantString(&'a str),
+        BuiltinCd(Box<AstNode<'a>>),
+        BuiltinExit,
+        ParseEnd,
+        DiscardMe
     }
 
     fn lex<'a>(cmd: &'a str) -> Vec<LexToken<'a>> {
@@ -28,43 +32,136 @@ mod interp {
 
             if c.is_alphabetic() && word_start_idx.is_none() {
                 word_start_idx = Some(i);
-            } 
+            }
+
+            if c == '\n' {
+                word_start_idx = None;
+                tokens.push(LexToken::Newline)
+            }
+            
+            if c == ';' {
+                word_start_idx = None;
+                tokens.push(LexToken::Semicolon)
+            }
         };
+
+        if word_start_idx.is_some() {
+            tokens.push(LexToken::Word(&cmd[word_start_idx.unwrap()..])); 
+        }
         return tokens;
     }
 
-    pub fn run(cmd: &str) -> u32 {
-        let lexed = lex(cmd);
+    fn parse_expr<'a>(lexed: &mut Vec<LexToken<'a>>, is_nested: bool ) -> AstNode<'a>{
+        match lexed[..] {
+            [LexToken::Word("cd"),..] => {
+                lexed.remove(0);
+                
+                let next = parse_expr(lexed,true);
 
-        if lexed.len() == 0 {
-            return 0;
+                AstNode::BuiltinCd(Box::new(next))
+            },
+            [LexToken::Word("exit"),..] => {
+                lexed.remove(0);
+                AstNode::BuiltinExit
+            },
+            [LexToken::Word(w),..] if is_nested => {
+                lexed.remove(0);
+                AstNode::ConstantString(w)
+            },
+            [LexToken::Semicolon,..] | [LexToken::Newline,..] => {
+                lexed.remove(0);
+                AstNode::DiscardMe
+            },
+            _ => {
+                AstNode::ParseEnd
+            }
         }
+    }
 
-        #[allow(irrefutable_let_patterns)] // lol whut, why does this lang hate temporary stuff so much?
-        if let LexToken::Word(v) = lexed[0] {
-            match v {
-                "cd" => {
-                    #[allow(irrefutable_let_patterns)] // lol whut, why does this lang hate temporary stuff so much?
-                    if let LexToken::Word(v) = lexed[1] {
-                        match set_current_dir(v) {
-                            Ok(..) => unsafe {
-                                set_var("PWD",current_dir().unwrap());
-                            },
-                            Err(e) => {
-                                println!("Couldn't change directory: {e}");
-                            }
-                        }; 
-                    }
-                },
-                "exit" => {
-                    exit(0); 
-                }
-                _ => {
-                    println!("command not found: \"{v}\"(TODO: binary invocation)")
-                }
+    pub fn parse<'a>(cmd: &'a str) -> AstNode<'a> {
+        let mut nodes = vec![];
+        let mut lexed = lex(cmd);
+
+        loop {
+            let node = parse_expr(&mut lexed,false);
+            if node == AstNode::ParseEnd {
+                break;
+            }
+            if node != AstNode::DiscardMe {
+                nodes.push(node);
             }
         }
 
+        return AstNode::Root(nodes);
+    }
+}
+
+mod interp {
+    use {
+        std::{
+            env::*,
+            process::*
+        },
+        crate::parser::*
+    };
+
+    fn interp_ast<'a>(node: AstNode<'a>, is_nested: bool) -> String{
+        match node {
+            AstNode::Root(_) => "".to_string(),
+            AstNode::ParseEnd => "".to_string(),
+            AstNode::DiscardMe => "".to_string(),
+            AstNode::BuiltinCd(n) => {
+                let mut dir = interp_ast(*n,true);
+                if is_nested {
+                    return "".to_string();
+                }
+                if dir == "" {
+                    match var("HOME") {
+                        Ok(v) => {
+                            dir = v;
+                        },
+                        Err(..) => {
+                            eprintln!("cd: HOME isn't set") 
+                        }
+                    } 
+                }
+                match set_current_dir(dir) {
+                    Ok(..) => unsafe {
+                        set_var("PWD",current_dir().unwrap());
+                    },
+                    Err(e) => {
+                        eprintln!("Couldn't change directory: {e}");
+                    }
+                };
+                return "".to_string();
+            },
+            AstNode::ConstantString(v) => v.to_string(),
+            AstNode::BuiltinExit => {
+                if !is_nested {
+                    exit(0)
+                } else {
+                    "".to_string()
+                } 
+            },
+        }
+    }
+
+    pub fn run(cmd: &str) -> u32 {
+        let ast = parse(cmd);
+       
+        println!("{:?}",ast);
+
+        if let AstNode::Root(v) = ast{
+            if v.len() == 0 {
+                return 1;
+            }
+
+            for c in v {
+                _ = interp_ast(c,false);
+            }
+        } else {
+            panic!("parse() returned a none-root AST node");
+        }
 
         return 0;
     }    
