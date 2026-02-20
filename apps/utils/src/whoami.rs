@@ -9,10 +9,6 @@ use {
 #[repr(C)]
 struct Passwd {
     pw_name: *const i8,
-    pw_uid: u32,
-    pw_gid: u32,
-    pw_dir: *const i8,
-    pw_shell: *const i8
 }
 
 unsafe extern "C" {
