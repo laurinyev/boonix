@@ -26,17 +26,21 @@ fn interp_ast<'a>(node: &AstNode<'a>, is_nested: bool) -> String{
 
             child.args(args);
             child.stdin(Stdio::inherit());
-            child.stdout(Stdio::inherit());
+            if !is_nested {
+                child.stdout(Stdio::inherit());
+            }
             child.stderr(Stdio::inherit());
-
-            child.spawn().unwrap();
-
-            match child.output() {
-                Ok(o) => match String::from_utf8(o.stdout) {
+            
+            if is_nested {
+                match child.output(){
+                    Ok(o) => match String::from_utf8(o.stdout) {
                             Ok(s) => s,
                             Err(_) => "".to_string(),
-                        },
-                Err(_) => "".to_string(), 
+                    },
+                    Err(_) => "".to_string(), 
+                }
+            } else {
+                "".to_string() 
             }
             
         },
