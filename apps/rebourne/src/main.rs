@@ -2,11 +2,23 @@ use std::{
     env::*,
 };
 
+mod resolver;
 mod parser;
 mod interp;
 mod repl;
 
 fn main() {
+    match var("PATH") {
+        Ok(v) => {
+            resolver::set_path(&v)
+        },
+        Err(..) => {
+            let default_path: &str = option_env!("REBOURNE_DEFAULT_PATH").unwrap_or("/usr/bin:/usr/local/bin:/usr/local/sbin");
+            unsafe { set_var("PATH",default_path) };
+            resolver::set_path(default_path)
+        }
+    }
+
     let mut args = args();
 
     if args.len() < 2 {

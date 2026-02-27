@@ -7,7 +7,7 @@ enum LexToken<'a>{
 
 #[derive(Debug,PartialEq, Eq)]
 pub enum AstNode<'a> {
-    Root(Vec<AstNode<'a>>),
+    Sequence(Vec<AstNode<'a>>),
     ConstantString(&'a str),
     BuiltinCd(Box<AstNode<'a>>),
     BuiltinExit,
@@ -86,7 +86,7 @@ pub fn parse<'a>(cmd: &'a str) -> AstNode<'a> {
     let mut nodes = vec![];
     let mut lexed = lex(cmd);
 
-    //println!("{:?}",lexed);
+    println!("{:?}",lexed);
     
     loop {
         let node = parse_expr(&mut lexed,false);
@@ -98,5 +98,5 @@ pub fn parse<'a>(cmd: &'a str) -> AstNode<'a> {
         }
     }
 
-    return AstNode::Root(nodes);
+    return AstNode::Sequence(nodes);
 }
