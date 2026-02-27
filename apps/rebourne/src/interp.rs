@@ -25,14 +25,15 @@ fn interp_ast<'a>(node: &AstNode<'a>, is_nested: bool) -> String{
             let mut child = Command::new(util_path.unwrap());
 
             child.args(args);
-            child.stdin(Stdio::inherit());
             if !is_nested {
+                child.stdin(Stdio::inherit());
                 child.stdout(Stdio::inherit());
+                child.stderr(Stdio::inherit());
             }
-            child.stderr(Stdio::inherit());
-            
+
+            let out = child.output(); 
             if is_nested {
-                match child.output(){
+                match out {
                     Ok(o) => match String::from_utf8(o.stdout) {
                             Ok(s) => s,
                             Err(_) => "".to_string(),
