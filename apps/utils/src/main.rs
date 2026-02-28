@@ -10,7 +10,7 @@ use {
 };
 
 fn help() {
-    println!("This is goonix utils v{}",env!("CARGO_PKG_VERSION"));
+    println!("This is boonix utils v{}",env!("CARGO_PKG_VERSION"));
     println!("Available utilities: false, ls, symlink, true, whoami, yes");
 }
 

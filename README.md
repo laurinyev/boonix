@@ -1,6 +1,5 @@
-# Goonix
-
-Un\*x for g\*\*ns
+# Boonix
+Un*x for Baboons
 
 ### Dependencies
 
