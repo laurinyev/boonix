@@ -1,5 +1,6 @@
 mod whoami; 
 mod ls; 
+mod yes; 
 
 use {
     std::{
@@ -23,6 +24,7 @@ fn invoke_util(args: Vec<String>){
         },
         "whoami" => whoami::run(),
         "ls" => ls::run(args),
+        "yes" => yes::run(args),
         _ => {
             help();
         }
