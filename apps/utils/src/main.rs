@@ -1,17 +1,17 @@
 mod whoami; 
 mod ls; 
 mod yes; 
+mod symlink; 
 
 use {
     std::{
-        env::*,
-        path::*,
-        process::*
+        env::*, path::*, process::*
     }
 };
 
 fn help() {
-    println!("This is help");
+    println!("This is goonix utils v{}",env!("CARGO_PKG_VERSION"));
+    println!("Available utilities: false, ls, symlink, true, whoami, yes");
 }
 
 fn invoke_util(args: Vec<String>){
@@ -25,6 +25,7 @@ fn invoke_util(args: Vec<String>){
         "whoami" => whoami::run(),
         "ls" => ls::run(args),
         "yes" => yes::run(args),
+        "symlink" => symlink::run(args),
         _ => {
             help();
         }
