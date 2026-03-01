@@ -23,7 +23,18 @@ void kmain(void) {
     pagemap_t pm = get_cur_pagemap();
 
     kprintf("Current pagemap address: 0x%llx\n",pm);
-    kprintf("Physical address of HHDM + 0x1069: 0x%llx\n",virt_to_phys(pm,hhdm_offset + 0x1069));
+    uintptr_t addr = virt_to_phys(pm,hhdm_offset + 0x6000);
+    kprintf("Physical address of HHDM + 0x1069: 0x%llx\n",addr);
+    uintptr_t found = find_avail_blocks(pm,1);
+    kprintf("Found available virtual memory: 0x%llx\n",found);
+
+    if(map(pm,found,addr,0x3)) {
+        *(uint64_t*)found = 0x69;
+        kprintf("First long of newly mapped page: 0x%llx\n",*(uint64_t*)found);
+        kprintf("First long of HHDM + 0x1069: 0x%llx\n",*(uint64_t*)(hhdm_offset + 0x6000));
+    } else {
+        kprintf("Mapping failed!\n"); 
+    }
 
     //memstress_test();
 
