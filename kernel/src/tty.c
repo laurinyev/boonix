@@ -1,7 +1,7 @@
 #include "tty.h"
 #include <stdbool.h>
 
-#include "cpu_stuffs.h"
+#include "third_party/x86.h"
 
 #define COM1 0x3f8
 

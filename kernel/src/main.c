@@ -5,7 +5,7 @@
 #include "paging.h"
 #include "garbage.h"
 #include "limine_garbage.h"
-#include "cpu_stuffs.h"
+#include "third_party/x86.h"
 #include "tty.h"
 #include "pmm.h"
 #include "printf.h"
@@ -13,8 +13,14 @@
 
 extern uintptr_t hhdm_offset;
 
+static gdt_desc_t gdt[] = GDT_PREBAKED; 
+
 void kmain(void) {
-    load_gdt();
+    //pretty easy huh?  
+    gdtr_t gdtr = {.size    = sizeof(gdt) - 1,
+                   .address = gdt};
+    lgdt(&gdtr);
+
     tty_init();
     limine_garbage_t garbage = init_limine_garbage(); 
 
