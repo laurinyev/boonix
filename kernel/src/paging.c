@@ -95,6 +95,14 @@ pagemap_t get_cur_pagemap(){
     return page;
 }
 
+pagemap_t create_pagemap(){
+    pagemap_t cur_pagemap = get_cur_pagemap();
+    uintptr_t new_page = (uintptr_t)pmm_alloc();
+    memset((void*)(new_page + hhdm_offset), 0, 4096);
+    memcpy((void*)(new_page + hhdm_offset + 2048), (void*)(cur_pagemap + hhdm_offset + 2048), 2048);
+
+    return (pagemap_t)new_page;
+}
 
 uintptr_t virt_to_phys(pagemap_t pm, uintptr_t virt){
     uint16_t off_l4 = (((virt) >> 39) & 0x1ff);
