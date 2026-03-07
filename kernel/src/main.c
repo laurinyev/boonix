@@ -6,6 +6,7 @@
 #include "garbage.h"
 #include "limine_garbage.h"
 #include "third_party/x86.h"
+#include "syscall.h"
 #include "tty.h"
 #include "pmm.h"
 #include "printf.h"
@@ -33,6 +34,9 @@ void kmain(void) {
     kprintf("Physical address of HHDM + 0x1069: 0x%llx\n",addr);
     uintptr_t found = find_avail_blocks(pm,1);
     kprintf("Found available virtual memory: 0x%llx\n",found);
+
+    syscall_init(); 
+    asm volatile("syscall");
 
     if(map(pm,found,addr,0x3)) {
         *(uint64_t*)found = 0x69;
