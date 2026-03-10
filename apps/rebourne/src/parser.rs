@@ -1,102 +1,114 @@
-#[derive(Debug ,PartialEq, Eq)]
-enum LexToken<'a>{
-    Word(&'a str),
+#[derive(Debug ,PartialEq, Eq, Clone)]
+enum LexToken {
+    Word(String),
     Newline,
-    Semicolon
+    Semicolon,
+    And,
+    Or,
+    EOF
 }
 
 #[derive(Debug,PartialEq, Eq)]
-pub enum AstNode<'a> {
-    Sequence(Vec<AstNode<'a>>),
-    ConstantString(&'a str),
-    BuiltinCd(Box<AstNode<'a>>),
+pub enum AstNode {
+    Sequence(Vec<AstNode>),
+    ConstantString(String),
+    BuiltinCd(Box<AstNode>),
     BuiltinExit,
-    ExternalCommand(&'a str,Vec<AstNode<'a>>),
+    ExternalCommand(String,Vec<AstNode>),
     ParseEnd,
     DiscardMe
 }
 
-fn lex<'a>(cmd: &'a str) -> Vec<LexToken<'a>> {
+fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     let mut tokens: Vec<LexToken> = vec![]; 
-    let mut word_start_idx = None;
+    let mut buffer = String::new();
 
-    for (i,c) in cmd.chars().enumerate() {
-        if word_start_idx.is_some() && (c.is_whitespace() || c == ';') {
-            tokens.push(LexToken::Word(&cmd[word_start_idx.unwrap()..i])); 
-            word_start_idx = None;
-        }
-        
-        if c == '\n' {
-            tokens.push(LexToken::Newline)
-        } else if c == ';' {
-            tokens.push(LexToken::Semicolon)
-        } else if !c.is_whitespace() && word_start_idx.is_none() {
-            word_start_idx = Some(i);
-        }
-    };
+    for c in cmd.chars() {
+        match c {
+            ' ' => {
+                tokens.push(LexToken::Word(buffer.clone()));
+                buffer.clear();
+            },
+            '\n' => {
 
-    if word_start_idx.is_some() {
-        tokens.push(LexToken::Word(&cmd[word_start_idx.unwrap()..])); 
+            },
+            _ => {
+                buffer.insert(buffer.len(), c);
+            }
+
+        } 
     }
+
+    if buffer.len() > 0 {
+        tokens.push(LexToken::Word(buffer.clone()));
+    }
+
     return tokens;
 }
 
-fn parse_expr<'a>(lexed: &mut Vec<LexToken<'a>>, is_args: bool ) -> AstNode<'a>{
-    match lexed[..] {
-        [LexToken::Word("cd"),..] => {
-            lexed.remove(0);
-            
-            let next = parse_expr(lexed,true);
+struct Peeker {
+    tokens: Vec<LexToken>
+}
 
-            AstNode::BuiltinCd(Box::new(next))
-        },
-        [LexToken::Word("exit"),..] => {
-            lexed.remove(0);
-            AstNode::BuiltinExit
-        },
-        [LexToken::Word(w),..] if is_args => {
-            lexed.remove(0);
-            AstNode::ConstantString(w)
-        },
-        [LexToken::Word(w),..] if !is_args => {
-            lexed.remove(0);
-           
-            let mut nodes = vec![];
-            loop {
-                let next = parse_expr(lexed,true);
-                if next == AstNode::DiscardMe {
-                    break;
-                }
-                nodes.push(next);
-            }
-            
-            AstNode::ExternalCommand(w,nodes)
-        },
-        [LexToken::Semicolon,..] | [LexToken::Newline,..] => {
-            lexed.remove(0);
-            AstNode::DiscardMe
-        },
-        _ => {
-            AstNode::ParseEnd
+impl Peeker {
+    fn new(tokens: Vec<LexToken>) -> Self {
+        Self { tokens }
+    }
+
+    fn peek(&self,i: usize) -> LexToken {
+        if i > self.tokens.len() {
+            return LexToken::EOF;
         }
+        self.tokens[i].clone()
+    }
+    
+    fn next(&mut self) -> LexToken {
+        if 1 > self.tokens.len() {
+            return LexToken::EOF;
+        }
+        self.tokens.remove(0)
+    }
+
+}
+
+fn parse_expr(mut peeker: Peeker) -> AstNode{
+    if let LexToken::Word(w) = peeker.next() {
+        AstNode::ConstantString(w) 
+    } else {
+        AstNode::ParseEnd 
     }
 }
 
-pub fn parse<'a>(cmd: &'a str) -> AstNode<'a> {
-    let mut nodes = vec![];
-    let mut lexed = lex(cmd);
-
-    println!("{:?}",lexed);
-    
-    loop {
-        let node = parse_expr(&mut lexed,false);
-        if node == AstNode::ParseEnd {
-            break;
+fn parse_command (mut peeker: Peeker) -> AstNode{
+    if let LexToken::Word(w) = peeker.next() {
+        match w.as_str() {
+            "exit" => {
+                AstNode::BuiltinExit
+            },
+            "cd" => {
+                AstNode::BuiltinCd(Box::new(parse_expr(peeker)))
+            },
+            _ => {
+                AstNode::ParseEnd
+            }
         }
-        if node != AstNode::DiscardMe {
-            nodes.push(node);
-        }
+    } else {
+        AstNode::ParseEnd
     }
 
+}
+
+fn parse_sequence(peeker: Peeker) -> AstNode{
+    let mut nodes = Vec::<AstNode>::new();
+    
+    nodes.push(parse_command(peeker));
+
     return AstNode::Sequence(nodes);
+}
+
+pub fn parse<'a>(cmd: &'a str) -> AstNode {
+    let lexed = lex(cmd);
+    let peeker = Peeker::new(lexed);
+
+    return parse_sequence(peeker);
 }

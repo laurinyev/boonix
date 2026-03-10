@@ -5,7 +5,7 @@ use {
     }
 };
 
-fn interp_ast<'a>(node: &AstNode<'a>, is_nested: bool) -> String{
+fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
     match node {
         AstNode::Sequence(nodes) => {
             let mut toret = String::new();
