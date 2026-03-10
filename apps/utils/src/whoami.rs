@@ -16,7 +16,7 @@ unsafe extern "C" {
     fn getpwuid(uid: u32) -> *const Passwd;
 }
 
-pub fn run(){
+pub fn run(_: Vec<String>){
     unsafe {
         let uid = getuid();
         let passwd = getpwuid(uid);
