@@ -15,7 +15,6 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
             toret
         },
         AstNode::ParseEnd => "".to_string(),
-        AstNode::DiscardMe => "".to_string(),
         AstNode::ExternalCommand(cmd,_args) => {
             let util_path = resolve(cmd); 
             if util_path.is_none() {

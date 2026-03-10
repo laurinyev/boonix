@@ -16,7 +16,6 @@ pub enum AstNode {
     BuiltinExit,
     ExternalCommand(String,Vec<AstNode>),
     ParseEnd,
-    DiscardMe
 }
 
 fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
@@ -26,11 +25,42 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     for c in cmd.chars() {
         match c {
             ' ' => {
-                tokens.push(LexToken::Word(buffer.clone()));
-                buffer.clear();
+                if buffer == "&&" {
+                    tokens.push(LexToken::And);
+                    buffer.clear();
+                } else if buffer == "||" {
+                    tokens.push(LexToken::Or);
+                    buffer.clear();
+                } else {
+                    tokens.push(LexToken::Word(buffer.clone()));
+                    buffer.clear();
+                }
             },
             '\n' => {
-
+                if buffer == "&&" {
+                    tokens.push(LexToken::And);
+                    buffer.clear();
+                } else if buffer == "||" {
+                    tokens.push(LexToken::Or);
+                    buffer.clear();
+                } else {
+                    tokens.push(LexToken::Word(buffer.clone()));
+                    buffer.clear();
+                }
+                tokens.push(LexToken::Newline);
+            },
+            ';' => {
+                if buffer == "&&" {
+                    tokens.push(LexToken::And);
+                    buffer.clear();
+                } else if buffer == "||" {
+                    tokens.push(LexToken::Or);
+                    buffer.clear();
+                } else {
+                    tokens.push(LexToken::Word(buffer.clone()));
+                    buffer.clear();
+                }
+                tokens.push(LexToken::Semicolon);
             },
             _ => {
                 buffer.insert(buffer.len(), c);
@@ -108,6 +138,7 @@ fn parse_sequence(peeker: Peeker) -> AstNode{
 
 pub fn parse<'a>(cmd: &'a str) -> AstNode {
     let lexed = lex(cmd);
+    println!("{lexed:?}");
     let peeker = Peeker::new(lexed);
 
     return parse_sequence(peeker);
