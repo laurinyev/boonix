@@ -12,10 +12,18 @@ enum LexToken {
 pub enum AstNode {
     Sequence(Vec<AstNode>),
     ConstantString(String),
-    BuiltinCd(Box<AstNode>),
-    BuiltinExit,
-    ExternalCommand(String,Vec<AstNode>),
+    Command(Box<AstNode>,Vec<AstNode>),
     ParseEnd,
+}
+
+fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
+    match buffer.as_str() {
+        "&&" => tokens.push(LexToken::And),
+        "||" => tokens.push(LexToken::Or),
+        _    => tokens.push(LexToken::Word(buffer.clone()))
+    }
+
+    buffer.clear();
 }
 
 fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
@@ -25,41 +33,14 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     for c in cmd.chars() {
         match c {
             ' ' => {
-                if buffer == "&&" {
-                    tokens.push(LexToken::And);
-                    buffer.clear();
-                } else if buffer == "||" {
-                    tokens.push(LexToken::Or);
-                    buffer.clear();
-                } else {
-                    tokens.push(LexToken::Word(buffer.clone()));
-                    buffer.clear();
-                }
+                flush_buf(&mut tokens, &mut buffer); 
             },
             '\n' => {
-                if buffer == "&&" {
-                    tokens.push(LexToken::And);
-                    buffer.clear();
-                } else if buffer == "||" {
-                    tokens.push(LexToken::Or);
-                    buffer.clear();
-                } else {
-                    tokens.push(LexToken::Word(buffer.clone()));
-                    buffer.clear();
-                }
+                flush_buf(&mut tokens, &mut buffer); 
                 tokens.push(LexToken::Newline);
             },
             ';' => {
-                if buffer == "&&" {
-                    tokens.push(LexToken::And);
-                    buffer.clear();
-                } else if buffer == "||" {
-                    tokens.push(LexToken::Or);
-                    buffer.clear();
-                } else {
-                    tokens.push(LexToken::Word(buffer.clone()));
-                    buffer.clear();
-                }
+                flush_buf(&mut tokens, &mut buffer);
                 tokens.push(LexToken::Semicolon);
             },
             _ => {
@@ -70,7 +51,7 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     }
 
     if buffer.len() > 0 {
-        tokens.push(LexToken::Word(buffer.clone()));
+        flush_buf(&mut tokens, &mut buffer);
     }
 
     return tokens;
@@ -101,7 +82,7 @@ impl Peeker {
 
 }
 
-fn parse_expr(mut peeker: Peeker) -> AstNode{
+fn parse_expr(peeker: &mut Peeker) -> AstNode{
     if let LexToken::Word(w) = peeker.next() {
         AstNode::ConstantString(w) 
     } else {
@@ -110,22 +91,20 @@ fn parse_expr(mut peeker: Peeker) -> AstNode{
 }
 
 fn parse_command (mut peeker: Peeker) -> AstNode{
-    if let LexToken::Word(w) = peeker.next() {
-        match w.as_str() {
-            "exit" => {
-                AstNode::BuiltinExit
-            },
-            "cd" => {
-                AstNode::BuiltinCd(Box::new(parse_expr(peeker)))
-            },
-            _ => {
-                AstNode::ParseEnd
-            }
-        }
-    } else {
-        AstNode::ParseEnd
-    }
+    let command = parse_expr(&mut peeker);
+    let mut args: Vec<AstNode> = vec![];
 
+    loop {
+        let expr = parse_expr(&mut peeker);
+
+        if expr == AstNode::ParseEnd {
+            break;
+        }
+
+        args.push(expr);
+    };
+
+    AstNode::Command(Box::new(command), args)
 }
 
 fn parse_sequence(peeker: Peeker) -> AstNode{
