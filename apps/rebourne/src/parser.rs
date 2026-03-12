@@ -17,6 +17,10 @@ pub enum AstNode {
 }
 
 fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
+    if buffer.len() < 1 {
+        return;
+    }
+
     match buffer.as_str() {
         "&&" => tokens.push(LexToken::And),
         "||" => tokens.push(LexToken::Or),
@@ -67,7 +71,7 @@ impl Peeker {
     }
 
     fn peek(&self,i: usize) -> LexToken {
-        if i > self.tokens.len() {
+        if i >= self.tokens.len() {
             return LexToken::EOF;
         }
         self.tokens[i].clone()
@@ -83,19 +87,24 @@ impl Peeker {
 }
 
 fn parse_expr(peeker: &mut Peeker) -> AstNode{
-    if let LexToken::Word(w) = peeker.next() {
+    if let LexToken::Word(w) = peeker.peek(0) {
+        peeker.next(); // only consume it if it matches 
         AstNode::ConstantString(w) 
     } else {
         AstNode::ParseEnd 
     }
 }
 
-fn parse_command (mut peeker: Peeker) -> AstNode{
-    let command = parse_expr(&mut peeker);
+fn parse_command (peeker: &mut Peeker) -> AstNode{
+    let command = parse_expr(peeker);
+    if command == AstNode::ParseEnd {
+        return AstNode::ParseEnd;
+    }
+
     let mut args: Vec<AstNode> = vec![];
 
     loop {
-        let expr = parse_expr(&mut peeker);
+        let expr = parse_expr(peeker);
 
         if expr == AstNode::ParseEnd {
             break;
@@ -107,10 +116,25 @@ fn parse_command (mut peeker: Peeker) -> AstNode{
     AstNode::Command(Box::new(command), args)
 }
 
-fn parse_sequence(peeker: Peeker) -> AstNode{
+fn parse_sequence(mut peeker: Peeker) -> AstNode{
     let mut nodes = Vec::<AstNode>::new();
-    
-    nodes.push(parse_command(peeker));
+   
+    loop {
+        let cmd = parse_command(&mut peeker);
+        
+        if let AstNode::Command(..) = &cmd {
+            let next = peeker.peek(0); 
+
+            if next == LexToken::Semicolon || next == LexToken::Newline {
+                nodes.push(cmd);
+                peeker.next();
+            } else if next == LexToken::EOF {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
 
     return AstNode::Sequence(nodes);
 }
