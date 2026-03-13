@@ -86,7 +86,7 @@ bool unmap(pagemap_t pm, uintptr_t virt){
 }
 
 void set_cur_pagemap(pagemap_t pm){
-    asm volatile("mov %%cr3, %0"::"r"(pm) : "memory");
+    asm volatile("mov %0, %%cr3"::"r"(pm) : "memory");
 }
 
 pagemap_t get_cur_pagemap(){
@@ -138,7 +138,6 @@ uintptr_t virt_to_phys(pagemap_t pm, uintptr_t virt){
 }
 
 //HACK HACK HACK: naive ass implementation
-const uintptr_t PAGE_SIZE = 0x1000;
 uintptr_t find_avail_blocks(pagemap_t pm, uintptr_t num_pages) {
     if (num_pages == 0)
         return 0;
@@ -146,7 +145,7 @@ uintptr_t find_avail_blocks(pagemap_t pm, uintptr_t num_pages) {
     uintptr_t run_start = 0;
     uintptr_t run_len   = 0;
 
-    for (uintptr_t p = 0; p + PAGE_SIZE <= hhdm_offset; p += PAGE_SIZE) {
+    for (uintptr_t p = PAGE_SIZE; p + PAGE_SIZE <= hhdm_offset; p += PAGE_SIZE) {
         if (!virt_to_phys(pm, p)) {
             if (run_len == 0)
                 run_start = p;

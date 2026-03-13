@@ -11,10 +11,32 @@
 #include "pmm.h"
 #include "printf.h"
 #include "memstress.h"
+#include "process.h"
 
 extern uintptr_t hhdm_offset;
 
 static gdt_desc_t gdt[] = GDT_PREBAKED; 
+
+void test_proc() {
+    asm volatile("syscall":: "a"(0));
+    while(1);
+}
+
+void spawn_test_proc() {
+    uint32_t proc_id  = create_process();
+    process_t* proc   = &process_stack[proc_id];
+    registers_t* regs = &proc->main_thread.regs;
+    
+    pagemap_t pm = get_cur_pagemap();
+    uintptr_t test_proc_phys = virt_to_phys(pm,(uintptr_t)&test_proc);
+
+    map(proc->pagemap,(uintptr_t)&test_proc,test_proc_phys, PAGE_FLAG_P | PAGE_FLAG_U);
+
+    regs->rip = (uint64_t)&test_proc; 
+    regs->cs  = 0x08; 
+    regs->ss  = 0x10; 
+    switch_to_proc(proc_id); // lets try to just jump to it
+}
 
 void kmain(void) {
     tty_init();
@@ -46,9 +68,9 @@ void kmain(void) {
 
     
     syscall_init(); 
-    asm volatile("syscall");
 
-    kprintf("Thank you %s <3","Nekodev");
+    kprintf("Thank you %s <3\n","Nekodev");
+    spawn_test_proc();
 
     hcf();
 }

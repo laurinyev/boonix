@@ -15,10 +15,10 @@ fn main() {
 
     let mut args: Vec<String> = args().collect();
     
-    let exe_name = String::from(Path::new(&args[0]).file_name().unwrap().to_str().unwrap());
+    let exe_name = Path::new(&args[0]).file_name().unwrap().to_str().unwrap();
 
-    if utils.contains_key(exe_name.as_str()) {
-        utils[&exe_name.as_str()](args.clone());
+    if utils.contains_key(exe_name) {
+        utils[exe_name](args.clone());
     } else {
         if args.len() > 1 && utils.contains_key(args[1].as_str()) {
             args.remove(0);

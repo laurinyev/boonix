@@ -25,7 +25,9 @@ typedef struct {
 
 extern process_t process_stack[MAX_PROC];
 extern uint32_t  process_count;
+extern uint32_t  current_proc;
 
 uint32_t create_process();
+uint32_t switch_to_proc(uint32_t proc_id);
 
 #endif //PROCESS_H

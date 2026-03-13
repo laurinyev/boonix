@@ -5,6 +5,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define PAGE_SIZE 0x1000
+
+#define PAGE_FLAG_P  (uint64_t)1 << 0
+#define PAGE_FLAG_W  (uint64_t)1 << 1
+#define PAGE_FLAG_U  (uint64_t)1 << 2
+#define PAGE_FLAG_NX (uint64_t)1 << 63
+
 typedef uintptr_t pagemap_t;
 
 bool map(pagemap_t pm,uintptr_t virt,uintptr_t phys, uint64_t flags);
