@@ -8,11 +8,13 @@ void syscall(registers_syscall_t* regs){
 }
 
 __attribute__((naked)) void syscall_handler() {
-    //TODO: switch stacks
     asm (
+        "mov %%rsp, %%gs:0x8\n" //proc->saved_stack
+        "mov %%gs:0x0, %%rsp\n" //proc->kernel_stack
+        
         "push %%rcx\n"
         "push %%r11\n"
-    
+        
         "push %%rax\n" 
         "push %%rdx\n" 
         "push %%rbx\n" 
@@ -26,7 +28,8 @@ __attribute__((naked)) void syscall_handler() {
         "push %%r13\n" 
         "push %%r14\n" 
         "push %%r15\n" 
-  
+ 
+        "cld\n"
         "mov %%rsp, %%rdi\n"
         "call syscall\n"
 
@@ -43,9 +46,11 @@ __attribute__((naked)) void syscall_handler() {
         "pop %%rbx\n" 
         "pop %%rdx\n" 
         "pop %%rax\n" 
-
+        
         "popfq\n"
         "pop %%rcx\n"
+        
+        "mov %%gs:0x8, %%rsp\n" //proc->kernel_stack
         "jmp %%rcx\n"
         ::: "memory"
     );

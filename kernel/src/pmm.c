@@ -137,12 +137,12 @@ void* pmm_alloc() {
         uintptr_t offset = c_pure / 8;
         uint8_t   bit    = c_pure % 8;
         uint8_t   byte   = bitmap_ptr[offset];
-        //kprintf("c = 1x%llx; c_pure = 0x%x; byte = 0x%x; bit = 0x%x\n",c,c_pure,byte,bit);
+       
         if (byte == 0xFF) {
             c+= PAGE_SIZE * ((8-bit)-1);
             continue;
         }
-        //kprintf("E 0x%llx\n",(byte & (1 << bit)));
+
         if ((byte & (1 << bit)) == 0) {
             mark_page(c_pure);
             lowest_free_page = c + PAGE_SIZE;

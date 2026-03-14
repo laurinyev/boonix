@@ -18,6 +18,8 @@ typedef struct {
 } handle_t;
 
 typedef struct {
+    uint64_t kernel_stack;
+    uint64_t saved_stack;
     pagemap_t pagemap;
     handle_t handles[MAX_HANDLES]; 
     thread_t main_thread;

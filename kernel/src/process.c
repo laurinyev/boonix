@@ -1,5 +1,6 @@
 #include "process.h"
 #include "paging.h"
+#include "third_party/x86.h"
 #include "printf.h"
 #include "pmm.h"
 
@@ -8,6 +9,7 @@ uint32_t  process_count = 0;
 uint32_t  current_proc = 0xFFFFFFFF;
 
 #define STACK_SIZE 0x8
+#define KERNEL_STACK_SIZE 0x8
 
 uint32_t create_process() {
     uint32_t new_id = process_count++;
@@ -17,15 +19,24 @@ uint32_t create_process() {
     new_ptr->main_thread.regs = (registers_t){0};
 
     uintptr_t stack_addr = find_avail_blocks(new_ptr->pagemap, STACK_SIZE);
-    uintptr_t stack_mem  = (uintptr_t)pmm_alloc();
+    uintptr_t kernel_stack_addr = find_avail_blocks(new_ptr->pagemap, KERNEL_STACK_SIZE);
 
     for(uint32_t i = 0; i < STACK_SIZE; i++){
-        if(!map(new_ptr->pagemap,stack_addr + i*PAGE_SIZE, stack_mem + i*PAGE_SIZE, PAGE_FLAG_P | PAGE_FLAG_W | PAGE_FLAG_U | PAGE_FLAG_NX)) {
+        if(!map(new_ptr->pagemap,stack_addr + i*PAGE_SIZE, (uintptr_t)pmm_alloc(), PAGE_FLAG_P | PAGE_FLAG_W | PAGE_FLAG_U | PAGE_FLAG_NX)) {
             kprintf("Mapping stack failed\n");
             return 0xFFFFFFFF;
         }
     }
 
+    for(uint32_t i = 0; i < KERNEL_STACK_SIZE; i++){
+        if(!map(new_ptr->pagemap,kernel_stack_addr + i*PAGE_SIZE, (uintptr_t)pmm_alloc(), PAGE_FLAG_P | PAGE_FLAG_W | PAGE_FLAG_U | PAGE_FLAG_NX)) {
+            kprintf("Mapping kernel stack failed\n");
+            return 0xFFFFFFFF;
+        }
+    }
+
+    new_ptr->kernel_stack = kernel_stack_addr + KERNEL_STACK_SIZE*PAGE_SIZE;
+    
     new_ptr->main_thread.regs.rsp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
     new_ptr->main_thread.regs.rbp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
     
@@ -78,7 +89,8 @@ uint32_t switch_to_proc(uint32_t proc_id) {
     }
 
     current_proc = proc_id;
-    
+    wrmsr(MSR_IA32_GS_BASE, (uint64_t)proc_ptr);
+
     registers_t* r = &proc_ptr->main_thread.regs;
 
     asm volatile(

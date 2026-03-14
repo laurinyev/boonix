@@ -74,6 +74,6 @@ void kmain(void) {
     kprintf("Thank you %s <3\n","Nekodev");
     spawn_test_proc();
 
-    asm volatile("syscall":: "a"(SYS_YIELD));
+    switch_to_proc(process_count - 1);
     hcf();
 }
