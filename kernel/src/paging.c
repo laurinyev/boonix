@@ -6,17 +6,17 @@
 extern uintptr_t hhdm_offset;
 static uintptr_t get_next_level(uintptr_t cur_addr, uint16_t cur_offset, bool make_new, uint64_t flags) {
     uint64_t* cur_lvl = (uint64_t*)(cur_addr + hhdm_offset); 
-    uintptr_t cur_entry = cur_lvl[cur_offset];
-    if (make_new && !(cur_entry & 1)) {
+    if (make_new && !(cur_lvl[cur_offset] & 1)) {
         uintptr_t new_page  = (uintptr_t)pmm_alloc();
         if (new_page == 0){
             return 0;
         }
         memset((void*)(new_page + hhdm_offset), 0, 4096);
-        cur_entry = (new_page & 0x000ffffffffff000) | flags;
-        cur_lvl[cur_offset] = cur_entry; 
+        cur_lvl[cur_offset]= (new_page & 0x000ffffffffff000) | (flags & 0xFF);
     }
-    return cur_entry;
+
+    cur_lvl[cur_offset] |= (flags & 0xFF);
+    return cur_lvl[cur_offset];
 }
 
 bool map(pagemap_t pm,uintptr_t virt,uintptr_t phys, uint64_t flags){
@@ -27,6 +27,7 @@ bool map(pagemap_t pm,uintptr_t virt,uintptr_t phys, uint64_t flags){
     
     uintptr_t next_level = get_next_level(pm,off_l4,true,flags);
     if(!(next_level & 1)){
+        kprintf("0x%llx\n",next_level);
         return false;
     }
     next_level &= 0x000ffffffffff000;

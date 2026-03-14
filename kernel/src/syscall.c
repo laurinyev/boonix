@@ -1,52 +1,52 @@
-#include "syscall.h"
-
+#include "syscall.h" 
+#include "syscall_handlr.h"
 #include "third_party/x86.h"
-#include "printf.h"
 
 void syscall(registers_syscall_t* regs){
-    kprintf("hello from syscall handler!\n");
+    //TODO: syscall redirecting
+    handle_syscall(regs); 
 }
 
 __attribute__((naked)) void syscall_handler() {
     //TODO: switch stacks
     asm (
-        "push %%rcx\n\t"
-        "push %%r11\n\t"
+        "push %%rcx\n"
+        "push %%r11\n"
     
-        "push %%rax\n\t" 
-        "push %%rdx\n\t" 
-        "push %%rbx\n\t" 
-        "push %%rbp\n\t" 
-        "push %%rsi\n\t" 
-        "push %%rdi\n\t" 
-        "push %%r8\n\t" 
-        "push %%r9\n\t" 
-        "push %%r10\n\t" 
-        "push %%r12\n\t" 
-        "push %%r13\n\t" 
-        "push %%r14\n\t" 
-        "push %%r15\n\t" 
+        "push %%rax\n" 
+        "push %%rdx\n" 
+        "push %%rbx\n" 
+        "push %%rbp\n" 
+        "push %%rsi\n" 
+        "push %%rdi\n" 
+        "push %%r8\n" 
+        "push %%r9\n" 
+        "push %%r10\n" 
+        "push %%r12\n" 
+        "push %%r13\n" 
+        "push %%r14\n" 
+        "push %%r15\n" 
   
-        "mov %%rsp, %%rdi\n\t"
-        "call syscall\n\t"
+        "mov %%rsp, %%rdi\n"
+        "call syscall\n"
 
-        "pop %%r15\n\t" 
-        "pop %%r14\n\t" 
-        "pop %%r13\n\t" 
-        "pop %%r12\n\t" 
-        "pop %%r10\n\t" 
-        "pop %%r9\n\t" 
-        "pop %%r8\n\t" 
-        "pop %%rdi\n\t" 
-        "pop %%rsi\n\t" 
-        "pop %%rbp\n\t" 
-        "pop %%rbx\n\t" 
-        "pop %%rdx\n\t" 
-        "pop %%rax\n\t" 
+        "pop %%r15\n" 
+        "pop %%r14\n" 
+        "pop %%r13\n" 
+        "pop %%r12\n" 
+        "pop %%r10\n" 
+        "pop %%r9\n" 
+        "pop %%r8\n" 
+        "pop %%rdi\n" 
+        "pop %%rsi\n" 
+        "pop %%rbp\n" 
+        "pop %%rbx\n" 
+        "pop %%rdx\n" 
+        "pop %%rax\n" 
 
-        "popfq\n\t"
-        "pop %%rcx\n\t"
-        "jmp %%rcx\n\t"
+        "popfq\n"
+        "pop %%rcx\n"
+        "jmp %%rcx\n"
         ::: "memory"
     );
 }

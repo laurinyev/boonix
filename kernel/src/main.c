@@ -7,6 +7,7 @@
 #include "limine_garbage.h"
 #include "third_party/x86.h"
 #include "syscall.h"
+#include "syscall_handlr.h"
 #include "tty.h"
 #include "pmm.h"
 #include "printf.h"
@@ -17,8 +18,9 @@ extern uintptr_t hhdm_offset;
 
 static gdt_desc_t gdt[] = GDT_PREBAKED; 
 
+//NOTE: I'm kinda mapping this sloppily so this cant be bigger than a page lul
 void test_proc() {
-    asm volatile("syscall":: "a"(0));
+    asm volatile("syscall":: "a"(SYS_WRITE));
     while(1);
 }
 
@@ -28,14 +30,14 @@ void spawn_test_proc() {
     registers_t* regs = &proc->main_thread.regs;
     
     pagemap_t pm = get_cur_pagemap();
+    uintptr_t test_proc_virt = find_avail_blocks(proc->pagemap,1);
     uintptr_t test_proc_phys = virt_to_phys(pm,(uintptr_t)&test_proc);
 
-    map(proc->pagemap,(uintptr_t)&test_proc,test_proc_phys, PAGE_FLAG_P | PAGE_FLAG_U);
+    map(proc->pagemap,test_proc_virt,test_proc_phys, PAGE_FLAG_P | PAGE_FLAG_U);
 
-    regs->rip = (uint64_t)&test_proc; 
+    regs->rip = test_proc_virt + (((uint64_t)&test_proc) & 0xfff); 
     regs->cs  = 0x08; 
     regs->ss  = 0x10; 
-    switch_to_proc(proc_id); // lets try to just jump to it
 }
 
 void kmain(void) {
@@ -72,5 +74,6 @@ void kmain(void) {
     kprintf("Thank you %s <3\n","Nekodev");
     spawn_test_proc();
 
+    asm volatile("syscall":: "a"(SYS_YIELD));
     hcf();
 }
