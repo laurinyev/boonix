@@ -1,24 +1,31 @@
 # Boonix
 Un*x for Baboons written in Rust and C.
 
-### Components
+## Usage
+```
+git clone https://github.com/laurinyev/boonix.git
+cd boonix
+make run
+```
+
+## Components
 `kernel/` - the unnamed Boonix kernel™
 
-`apps/`
-- `rebourne/` - the system shell meant to be bash-compatible
+`apps/`:
+- `rebourne/` - bash-compatible system shell
 - `utils/` - various system utilities
 - `termfun/` - terminal fun stuff
 
-### Dependencies
+## Dependencies
 Kernel:
 * gmake
-* gcc/clang
+* gcc/llvm + binutils
 * xorriso or mtools
 
 Userspace applications:
-* rust stable toolchain
+* Rust stable toolchain
 
-### (KERNEL) Toolchain selection
+## (KERNEL) Toolchain selection
 The `TOOLCHAIN` and `TOOLCHAIN_PREFIX` `make` variables can be used to set the toolchain. 
 For example:
 ```
@@ -29,15 +36,15 @@ or:
 make TOOLCHAIN_PREFIX=x86_64-elf-
 ```
 
-### Architecture support
+## Architecture support
 This project is currently x86-only (userspace apps may run on any architecture).
 
-### Makefile targets
+## Makefile targets
 * `all`: builds the kernel + makes a test ISO.
 * `run`: `all` + runs it in qemu with OVMF.
 * `debug`: `all` + runs it with debug flags (and OVMF).
 
-suffixes(must be applied in order if stacked;not applicable to `debug` because I'm lazy 💀):
+suffixes(must be applied in order if stacked; not applicable to `debug` because I'm lazy 💀):
 1. `-hdd`: makes it create a test HDD instead of test ISO(requires `mtools`)
 2. `-bios`: makes it use the default QEMU firmware instead of OVMF.
 
@@ -49,5 +56,10 @@ Contributions are welcome! Just open a pull request and I'll see if I can merge 
 * [nanoprintf](https://github.com/charlesnicholson/nanoprintf/tree/main): source of the nanoprintf header
 * [limine-c-template](https://codeberg.org/Limine/limine-c-template): source of the kernel build system
 
-### Licensing
+## No AI used
+Wanna see something that is vibecoded? Take a look at [this](https://github.com/laurinyev/vibe_coding_whatever)!
+
+(Please don't click the link if you don't like vibecoded projects)
+
+## Licensing
 This operating system is part of the public domain! You can do whatever you want with it under the nonexistent terms of the BSD0 license. See LICENSE file for details.
