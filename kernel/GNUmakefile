@@ -12,7 +12,7 @@ ARCH := x86_64
 PREFIX := /usr/local
 
 # Check if the architecture is supported.
-ifeq ($(filter $(ARCH),aarch64 loongarch64 riscv64 x86_64),)
+ifeq ($(filter $(ARCH),x86_64),)
     $(error Architecture $(ARCH) not supported)
 endif
 
@@ -117,44 +117,6 @@ ifeq ($(ARCH),x86_64)
     override NASMFLAGS := \
         -f elf64 \
         $(NASMFLAGS)
-endif
-ifeq ($(ARCH),aarch64)
-    ifeq ($(CC_IS_CLANG),1)
-        override CC += \
-            -target aarch64-unknown-none-elf
-    endif
-    override CFLAGS += \
-        -mcpu=generic \
-        -march=armv8-a+nofp+nosimd \
-        -mgeneral-regs-only
-    override LDFLAGS += \
-        -m aarch64elf
-endif
-ifeq ($(ARCH),riscv64)
-    ifeq ($(CC_IS_CLANG),1)
-        override CC += \
-            -target riscv64-unknown-none-elf
-    endif
-    override CFLAGS += \
-        -march=rv64imac_zicsr_zifencei \
-        -mabi=lp64 \
-        -mno-relax
-    override LDFLAGS += \
-        -m elf64lriscv \
-        --no-relax
-endif
-ifeq ($(ARCH),loongarch64)
-    ifeq ($(CC_IS_CLANG),1)
-        override CC += \
-            -target loongarch64-unknown-none-elf
-    endif
-    override CFLAGS += \
-        -march=loongarch64 \
-        -mabi=lp64s \
-        -mfpu=none \
-        -msimd=none
-    override LDFLAGS += \
-        -m elf64loongarch
 endif
 
 # Internal linker flags that should not be changed by the user.

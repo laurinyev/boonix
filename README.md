@@ -30,3 +30,4 @@ This project is currently x86-only(though the userspace apps should run on any a
 `make run-hdd`: same as `make all-hdd` but it runs it in qemu with OVMF.
 `make run-bios`: same as `make all` but it runs it with qemu with the default BIOS.
 `make run-hdd-bios`: same as `make all-hdd` but it runs it in qemu with the default BIOS.
+`make debug`: same as `make run` but it runs it with debug flags.
