@@ -10,12 +10,12 @@ Un*x for Baboons written in Rust and C.
 - `termfun/` - terminal fun stuff
 
 ### Dependencies
-kernel:
+Kernel:
 * gmake
 * gcc/clang
 * xorriso or mtools
 
-userspace applications:
+Userspace applications:
 * rust stable toolchain
 
 ### (KERNEL) Toolchain selection
@@ -33,13 +33,13 @@ make TOOLCHAIN_PREFIX=x86_64-elf-
 This project is currently x86-only (userspace apps may run on any architecture).
 
 ### Makefile targets
-`make all`: builds the kernel and makes a test ISO.
-`make all-hdd`: builds the kernel and makes a test HDD.
-`make run`: same as `make all` but it runs it in qemu with OVMF.
-`make run-hdd`: same as `make all-hdd` but it runs it in qemu with OVMF.
-`make run-bios`: same as `make all` but it runs it with qemu with the default BIOS.
-`make run-hdd-bios`: same as `make all-hdd` but it runs it in qemu with the default BIOS.
-`make debug`: same as `make run` but it runs it with debug flags.
+* `all`: builds the kernel + makes a test ISO.
+* `run`: `all` + runs it in qemu with OVMF.
+* `debug`: `all` + runs it with debug flags (and OVMF).
+
+suffixes(must be applied in order if stacked;not applicable to `debug` because I'm lazy 💀):
+1. `-hdd`: makes it create a test HDD instead of test ISO(requires `mtools`)
+2. `-bios`: makes it use the default QEMU firmware instead of OVMF.
 
 ### Contributing
 Contributions are welcome! Just open a pull request and I'll see if I can merge it.
