@@ -3,11 +3,12 @@ Un*x for Baboons
 
 ### Dependencies
 kernel:
-    * gmake
-    * gcc/clang
-    * xorriso or mtools
+* gmake
+* gcc/clang
+* xorriso or mtools
+
 rebourne, utils and termfun:
-    * rust stable toolchain
+* rust stable toolchain
 
 ### (KERNEL) Toolchain selection
 The `TOOLCHAIN` and `TOOLCHAIN_PREFIX` `make` variables can be used to set the toolchain. 
