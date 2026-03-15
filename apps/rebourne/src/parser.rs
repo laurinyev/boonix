@@ -19,6 +19,11 @@ pub enum AstNode {
     ParseEnd,
 }
 
+pub enum LexerMode {
+    Normal,
+    Comment
+}
+
 fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
     if buffer.len() < 1 {
         return;
@@ -37,25 +42,46 @@ fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
 fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     let mut tokens: Vec<LexToken> = vec![]; 
     let mut buffer = String::new();
+    let mut lexer_mode = LexerMode::Normal;
 
     for c in cmd.chars() {
-        match c {
-            ' ' => {
-                flush_buf(&mut tokens, &mut buffer); 
-            },
-            '\n' => {
-                flush_buf(&mut tokens, &mut buffer); 
-                tokens.push(LexToken::Newline);
-            },
-            ';' => {
-                flush_buf(&mut tokens, &mut buffer);
-                tokens.push(LexToken::Semicolon);
-            },
-            _ => {
-                buffer.insert(buffer.len(), c);
-            }
+        match lexer_mode {
+            LexerMode::Normal => {
+                 match c {
+                    ' ' => {
+                        flush_buf(&mut tokens, &mut buffer); 
+                    },
+                    '\n' => {
+                        flush_buf(&mut tokens, &mut buffer); 
+                        tokens.push(LexToken::Newline);
+                    },
+                    ';' => {
+                        flush_buf(&mut tokens, &mut buffer);
+                        tokens.push(LexToken::Semicolon);
+                    },
+                    '#' => {
+                        if buffer.len() == 0 {
+                            lexer_mode = LexerMode::Comment;
+                        } else {
+                            buffer.push(c);
+                        }
+                    }
+                    _ => {
+                        buffer.push(c);
+                    }
 
-        } 
+                }       
+            }, 
+            LexerMode::Comment => {
+                match c {
+                    '\n' => {
+                        lexer_mode = LexerMode::Normal;
+                        tokens.push(LexToken::Newline);
+                    },
+                    _ => ()
+                }
+            }
+        }
     }
 
     if buffer.len() > 0 {
