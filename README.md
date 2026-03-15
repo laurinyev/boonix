@@ -2,17 +2,15 @@
 Un*x for Baboons
 
 ### Dependencies
+kernel:
+    * gmake
+    * gcc/clang
+    * xorriso or mtools
+rebourne, utils and termfun:
+    * rust stable toolchain
 
-Any `make` command depends on GNU make (`gmake`) and is expected to be run using it. This usually means using `make` on most GNU/Linux distros, or `gmake` on other non-GNU systems.
-
-It is recommended to build this project using a standard UNIX-like system, using a Clang/LLVM toolchain capable of cross compilation.
-
-Additionally, building an ISO with `make all` requires `xorriso`, and building a HDD/USB image with `make all-hdd` requires `sgdisk` (usually from `gdisk` or `gptfdisk` packages) and `mtools`.
-
-### Toolchain selection
-
-The `TOOLCHAIN` and `TOOLCHAIN_PREFIX` `make` variables can be used to set the toolchain. `TOOLCHAIN` can be set to `llvm` to use Clang/LLVM.
-
+### (KERNEL) Toolchain selection
+The `TOOLCHAIN` and `TOOLCHAIN_PREFIX` `make` variables can be used to set the toolchain. 
 For example:
 ```
 make TOOLCHAIN=llvm
@@ -22,20 +20,13 @@ or:
 make TOOLCHAIN_PREFIX=x86_64-elf-
 ```
 
-### Architectural targets
-
-The `ARCH` make variable determines the target architecture to build the kernel and image for.
-
-The default `ARCH` is `x86_64`. Other options include: `aarch64`, `loongarch64`, and `riscv64`.
+### Architecture support
+This project is currently x86-only(though the userspace apps should run on any architecture).
 
 ### Makefile targets
-
-Running `make all` will compile the kernel (from the `kernel/` directory) and then generate a bootable ISO image.
-
-Running `make all-hdd` will compile the kernel and then generate a raw image suitable to be flashed onto a USB stick or hard drive/SSD.
-
-Running `make run` will build the kernel and a bootable ISO (equivalent to make all) and then run it using `qemu` (if installed).
-
-Running `make run-hdd` will build the kernel and a raw HDD image (equivalent to make all-hdd) and then run it using `qemu` (if installed).
-
-For x86_64, the `run-bios` and `run-hdd-bios` targets are equivalent to their non `-bios` counterparts except that they boot `qemu` using the default SeaBIOS firmware instead of OVMF.
+`make all`: builds the kernel and makes a test ISO.
+`make all-hdd`: builds the kernel and makes a test HDD.
+`make run`: same as `make all` but it runs it in qemu with OVMF.
+`make run-hdd`: same as `make all-hdd` but it runs it in qemu with OVMF.
+`make run-bios`: same as `make all` but it runs it with qemu with the default BIOS.
+`make run-hdd-bios`: same as `make all-hdd` but it runs it in qemu with the default BIOS.
