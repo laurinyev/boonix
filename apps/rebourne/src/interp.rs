@@ -5,25 +5,44 @@ use {
     }
 };
 
-fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
+fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
     match node {
         AstNode::Sequence(nodes) => {
-            let mut toret = String::new();
+            let mut exitcode = 0;
+            let mut stdout = String::new();
             for n in nodes {
-                toret += &interp_ast(n, is_nested)
+                let returned = interp_ast(n, is_nested);
+                exitcode = returned.0;
+                stdout  += &returned.1;
             }
-            toret
+            (exitcode, stdout)  
         },
-        AstNode::ParseEnd => "".to_string(),
-        AstNode::ConstantString(v) => v.to_string(),
+        AstNode::ParseEnd => (0,"".to_string()),
+        AstNode::ConstantString(v) => (0,v.to_string()),
+        AstNode::And(a,b) => {
+            let first = interp_ast(a, false);
+            if first.0 == 0 {
+                return interp_ast(b, false);
+            } else {
+                return first;
+            }
+        },
+        AstNode::Or(a,b) => {
+            let first = interp_ast(a, false);
+            if first.0 != 0 {
+                return interp_ast(b, false);
+            } else {
+                return first;
+            }
+        },
         AstNode::Command(cmd,args) => {
-            let cmd_resolved = interp_ast(cmd, true);
+            let cmd_resolved = interp_ast(cmd, true).1;
 
             match cmd_resolved.as_str() {
                 "cd" => {
-                    let mut dir = interp_ast(&args[0],true);
+                    let mut dir = interp_ast(&args[0],true).1;
                     if is_nested {
-                        return "".to_string();
+                        return (0,"".to_string());
                     }
                     if dir == "" {
                          match var("HOME") {
@@ -31,7 +50,8 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
                                 dir = v;
                             },
                             Err(..) => {
-                                eprintln!("cd: HOME isn't set") 
+                                eprintln!("cd: HOME isn't set"); 
+                                return (1,"".to_string());
                             }
                         }
                     }
@@ -41,25 +61,28 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
                         },
                         Err(e) => {
                             eprintln!("Couldn't change directory: {e}");
+                            return (1,"".to_string());
                         }
                     };
-                    return "".to_string();
+                    return (0,"".to_string());
                 },
                 "exit" => {
                     if !is_nested {
                         exit(0)
                     } else {
-                        "".to_string()
+                        (0,"".to_string())
                     }
                 },
                 _ => {
                     let util_path = resolve(&cmd_resolved); 
                     if util_path.is_none() {
-                        return "".to_string() 
+                        eprintln!("command not found: {cmd_resolved}");
+                        return (127,"".to_string()); 
                     }
                     let mut child = Command::new(util_path.unwrap());
 
-                    child.args(args.iter().map(|a| interp_ast(a, true)));
+                    child.args(args.iter().map(|a| interp_ast(a, true).1));
+                    
                     if !is_nested {
                         child.stdin(Stdio::inherit());
                         child.stdout(Stdio::inherit());
@@ -70,13 +93,16 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
                     if is_nested {
                         match out {
                             Ok(o) => match String::from_utf8(o.stdout) {
-                                    Ok(s) => s,
-                                    Err(_) => "".to_string(),
+                                    Ok(s) => (o.status.code().unwrap_or(1),s),
+                                    Err(_) => (1,"".to_string()),
                             },
-                            Err(_) => "".to_string(), 
+                            Err(_) => (1,"".to_string()), 
                         }
                     } else {
-                        "".to_string() 
+                        match out {
+                            Ok(o) => (o.status.code().unwrap_or(1), "".to_string()),
+                            Err(_) => (1, "".to_string()),
+                        }
                     }
                 }
             }
@@ -87,7 +113,7 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> String{
 pub fn run(cmd: &str) -> u32 {
     let root = parse(cmd);
     println!("{:?}",root);
-    interp_ast(&root,false);
+    println!("Exit code: {}",interp_ast(&root,false).0);
     
     return 0;
 }

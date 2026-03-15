@@ -4,6 +4,7 @@ enum LexToken {
     Newline,
     Semicolon,
     And,
+    Bg,
     Or,
     EOF
 }
@@ -13,6 +14,8 @@ pub enum AstNode {
     Sequence(Vec<AstNode>),
     ConstantString(String),
     Command(Box<AstNode>,Vec<AstNode>),
+    And(Box<AstNode>,Box<AstNode>),
+    Or(Box<AstNode>,Box<AstNode>),
     ParseEnd,
 }
 
@@ -23,6 +26,7 @@ fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
 
     match buffer.as_str() {
         "&&" => tokens.push(LexToken::And),
+        "&" => tokens.push(LexToken::Bg),
         "||" => tokens.push(LexToken::Or),
         _    => tokens.push(LexToken::Word(buffer.clone()))
     }
@@ -77,7 +81,7 @@ impl Peeker {
         self.tokens[i].clone()
     }
     
-    fn next(&mut self) -> LexToken {
+    fn consume(&mut self) -> LexToken {
         if 1 > self.tokens.len() {
             return LexToken::EOF;
         }
@@ -88,14 +92,14 @@ impl Peeker {
 
 fn parse_expr(peeker: &mut Peeker) -> AstNode{
     if let LexToken::Word(w) = peeker.peek(0) {
-        peeker.next(); // only consume it if it matches 
+        peeker.consume(); // only consume it if it matches 
         AstNode::ConstantString(w) 
     } else {
         AstNode::ParseEnd 
     }
 }
 
-fn parse_command (peeker: &mut Peeker) -> AstNode{
+fn parse_command (peeker: &mut Peeker) -> AstNode {
     let command = parse_expr(peeker);
     if command == AstNode::ParseEnd {
         return AstNode::ParseEnd;
@@ -116,23 +120,48 @@ fn parse_command (peeker: &mut Peeker) -> AstNode{
     AstNode::Command(Box::new(command), args)
 }
 
+fn parse_command_expr (peeker: &mut Peeker) -> AstNode{
+    let mut expr = AstNode::ParseEnd;
+    loop {
+        let next = peeker.peek(0);
+        if next == LexToken::And {
+            peeker.consume();
+            let command = parse_command(peeker);
+            expr = AstNode::And(Box::new(expr), Box::new(command)); 
+        } else if next == LexToken::Or {
+            peeker.consume();
+            let command = parse_command(peeker);
+            expr = AstNode::Or(Box::new(expr), Box::new(command)); 
+        } else if next == LexToken::Semicolon || next == LexToken::Newline|| next == LexToken::EOF {
+            return expr;
+        } else {
+            let command = parse_command(peeker);  
+            if command == AstNode::ParseEnd {
+                return expr;
+            } else {
+                expr = command;
+            }
+        }
+    }    
+}
+
 fn parse_sequence(mut peeker: Peeker) -> AstNode{
     let mut nodes = Vec::<AstNode>::new();
    
     loop {
-        let cmd = parse_command(&mut peeker);
-        
-        if let AstNode::Command(..) = &cmd {
+        let cmdexpr = parse_command_expr(&mut peeker);
+
+        if cmdexpr == AstNode::ParseEnd {
+            break;
+        } else {
             let next = peeker.peek(0); 
 
             if next == LexToken::Semicolon || next == LexToken::Newline {
-                nodes.push(cmd);
-                peeker.next();
+                nodes.push(cmdexpr);
+                peeker.consume();
             } else if next == LexToken::EOF {
                 break;
             }
-        } else {
-            break;
         }
     }
 
