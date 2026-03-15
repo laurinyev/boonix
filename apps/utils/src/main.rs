@@ -1,6 +1,7 @@
 mod whoami; 
 mod ls; 
 mod yes; 
+mod echo; 
 mod symlink; 
 
 use {
@@ -23,6 +24,7 @@ fn main() {
     utils.insert("ls", Box::new(ls::run));
     utils.insert("symlink", Box::new(symlink::run));
     utils.insert("yes", Box::new(yes::run));
+    utils.insert("echo", Box::new(echo::run));
     utils.insert("whoami", Box::new(whoami::run));
 
     let mut args: Vec<String> = args().collect();
