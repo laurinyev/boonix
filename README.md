@@ -5,9 +5,9 @@ Un*x for Baboons written in Rust and C.
 `kernel/` - the unnamed Boonix kernel™
 
 `apps/`
-    - `rebourne/` - the system shell meant to be bash-compatible
-    - `utils/` - various system utilities
-    - `termfun/` - terminal fun stuff
+- `rebourne/` - the system shell meant to be bash-compatible
+- `utils/` - various system utilities
+- `termfun/` - terminal fun stuff
 
 ### Dependencies
 kernel:
