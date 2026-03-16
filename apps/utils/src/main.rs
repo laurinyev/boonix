@@ -21,6 +21,10 @@ fn main() {
         exit(1);
     }));
     
+    utils.insert("clear", Box::new(|_| {
+        print!("\x1B[H\x1B[2J\x1B[3J");
+    }));
+    
     utils.insert("ls", Box::new(ls::run));
     utils.insert("symlink", Box::new(symlink::run));
     utils.insert("yes", Box::new(yes::run));

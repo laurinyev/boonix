@@ -8,7 +8,7 @@ use {
 
 #[repr(C)]
 struct Passwd {
-    pw_name: *const i8,
+    pw_name: *const c_char,
 }
 
 unsafe extern "C" {

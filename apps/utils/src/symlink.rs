@@ -19,6 +19,7 @@ pub fn run(_args: Vec<String>) {
     
     symlink_util(&exe, exe_dir, &mut failed_count, "true");
     symlink_util(&exe, exe_dir, &mut failed_count, "false");
+    symlink_util(&exe, exe_dir, &mut failed_count, "clear");
     symlink_util(&exe, exe_dir, &mut failed_count, "ls");
     symlink_util(&exe, exe_dir, &mut failed_count, "echo");
     symlink_util(&exe, exe_dir, &mut failed_count, "whoami");
