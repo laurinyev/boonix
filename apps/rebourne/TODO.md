@@ -4,9 +4,10 @@
 * redirection operators
 * backgrounding(`command &`)
 * script execution
-* `.rbrc` execution
+* `.rbrc` execution(maybe `.bashrc` fallback)
 * qoutation and double qoutation support
 * escaping support
+* pretty PS1 stuff
 
 ### Long term(hard)
 * if, and switch statements
