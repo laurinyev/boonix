@@ -3,6 +3,7 @@ use std::{
     fs::*,
     path::*
 };
+const PATH_SEP: &str = if cfg!(any(target_os = "windows", feature = "semi_path_sep")) { ";" } else { ":" };
 
 static mut PATHS : Vec<String> = Vec::new();
 
@@ -10,7 +11,7 @@ static mut PATHS : Vec<String> = Vec::new();
 pub fn set_path(path: &str) {
     unsafe { PATHS.clear() }; 
    
-    let mut paths = path.to_string().split(":").map(|s| s.to_string()).collect();
+    let mut paths = path.to_string().split(PATH_SEP).map(|s| s.to_string()).collect();
 
     unsafe { PATHS.append(&mut paths);}
 }
