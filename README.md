@@ -7,7 +7,8 @@ git clone https://github.com/laurinyev/boonix.git
 cd boonix
 make run
 ```
-(note: this currently only launches a headless QEMU instance with the barebones kernel,<\br> check out the other projects' READMEs for more info on how to run them)
+(note: this currently only launches a headless QEMU instance with the barebones kernel,
+check out the other projects' READMEs for more info on how to run them)
 
 ## Components
 `kernel/` - the unnamed Boonix kernel™
