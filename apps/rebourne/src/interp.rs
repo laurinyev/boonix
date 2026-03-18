@@ -40,7 +40,10 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
 
             match cmd_resolved.as_str() {
                 "cd" => {
-                    let mut dir = interp_ast(&args[0],true).1;
+                    let mut dir = match args.get(0) {
+                        Some(v) => interp_ast(&v,true).1,
+                        None => "".to_string() 
+                    };
                     if is_nested {
                         return (0,"".to_string());
                     }
