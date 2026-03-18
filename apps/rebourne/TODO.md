@@ -4,7 +4,7 @@
 * redirection operators
 * backgrounding(`command &`)
 * script execution
-* `.rbrc` execution(maybe `.bashrc` fallback)
+* `.rbrc` execution(maybe `.bashrc`,`.profile` and `/etc/bashrc` fallback)
 * qoutation and double qoutation support
 * escaping support
 * pretty PS1 stuff
