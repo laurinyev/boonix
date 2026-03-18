@@ -4,17 +4,19 @@
 * redirection operators
 * backgrounding(`command &`)
 * script execution
-* `.rbrc` execution(maybe `.bashrc`,`.profile` and `/etc/bashrc` fallback)
+* startup script execution(`~/.rbrc`, `~/.bashrc`,`~/.profile`, `/etc/rbrc` and `/etc/bashrc` fallback)
 * qoutation and double qoutation support
 * escaping support
 * pretty PS1 stuff
 
 ### Long term(hard)
 * if, and switch statements
-* test builtin
+* test builtin and its alias "["
+* bash specific "[[" builtin
 * type builtin
 * variable management
 * job control
 
 ### not a priority
 * vi mode
+* posix mode
