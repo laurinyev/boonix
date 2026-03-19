@@ -8,6 +8,67 @@ enum EscapeInterpMode {
     Oct
 }
 
+fn esc_interp_mode_normal(esc_interp_mode: &mut EscapeInterpMode,c: char) {
+    if c == '\\' {
+        *esc_interp_mode = EscapeInterpMode::Escape; 
+    } else {
+        print!("{c}");
+    }
+}
+
+fn esc_interp_mode_escape(esc_interp_mode: &mut EscapeInterpMode,c: char, chars_remaining: &mut u32) {
+    match c {
+        '\\' => print!("\\"),
+        'a' => print!("\x07"),
+        'b' => print!("\x09"),
+        'c' => exit(1),
+        'e' => print!("\x1B"),
+        'f' => print!("\x0C"),
+        'n' => print!("\n"),
+        'r' => print!("\r"),
+        't' => print!("\t"),
+        'v' => print!("\x0B"),
+        'x' => {
+            *chars_remaining = 2;
+            *esc_interp_mode = EscapeInterpMode::Hex;
+        },
+        '0' => {
+            *chars_remaining = 3;
+            *esc_interp_mode = EscapeInterpMode::Oct;
+        }
+        _ => print!("\\{c}"),
+    }
+    //Don't modify it if it changed
+    if *esc_interp_mode == EscapeInterpMode::Escape {
+        *esc_interp_mode = EscapeInterpMode::Normal;
+    }
+}
+fn esc_interp_mode_hex(esc_interp_mode: &mut EscapeInterpMode,c: char, chars_remaining: &mut u32, num_buf: &mut String) {
+    if *chars_remaining == 0 || !c.is_digit(16) {
+        let new_c = u8::from_str_radix(&num_buf, 16).expect("failed to convert characters into number!");
+        print!("{}", new_c as char);
+        num_buf.clear();
+        *esc_interp_mode = EscapeInterpMode::Normal;
+        esc_interp_mode_normal(esc_interp_mode, c);
+    } else {
+        num_buf.push(c);
+        *chars_remaining -= 1;
+    }
+}
+
+fn esc_interp_mode_oct(esc_interp_mode: &mut EscapeInterpMode,c: char, chars_remaining: &mut u32, num_buf: &mut String) {
+    if *chars_remaining == 0 || !c.is_digit(8) {
+        let new_c = u8::from_str_radix(&num_buf, 8).expect("failed to convert characters into number!");
+        print!("{}", new_c as char);
+        num_buf.clear();
+        *esc_interp_mode = EscapeInterpMode::Normal;
+        esc_interp_mode_normal(esc_interp_mode, c);
+    } else {
+        num_buf.push(c);
+        *chars_remaining -= 1;
+    }
+}
+
 pub fn run(args: Vec<String>) {
     let count = args.len();
     let mut last_newline = true;
@@ -25,62 +86,10 @@ pub fn run(args: Vec<String>) {
                 if interp_escapes {
                     for c in arg.chars() {
                         match esc_interp_mode {
-                            EscapeInterpMode::Normal => {
-                                if c == '\\' {
-                                   esc_interp_mode = EscapeInterpMode::Escape; 
-                                } else {
-                                    print!("{c}");
-                                }     
-                            },
-                            EscapeInterpMode::Escape => {
-                                match c {
-                                    '\\' => print!("\\"),
-                                    'a' => print!("\x07"),
-                                    'b' => print!("\x08"),
-                                    'c' => exit(1),
-                                    'e' => print!("\x1B"),
-                                    'f' => print!("\x0C"),
-                                    'n' => print!("\n"),
-                                    'r' => print!("\r"),
-                                    't' => print!("\t"),
-                                    'v' => print!("\x0B"),
-                                    'x' => {
-                                        chars_remaining = 2;
-                                        esc_interp_mode = EscapeInterpMode::Hex;
-                                    },
-                                    '0' => {
-                                        chars_remaining = 3;
-                                        esc_interp_mode = EscapeInterpMode::Oct;
-                                    }
-                                    _ => print!("\\{c}"),
-                                }
-                                //Don't modify it if it changed
-                                if esc_interp_mode == EscapeInterpMode::Escape {
-                                    esc_interp_mode = EscapeInterpMode::Normal;
-                                }
-                            },
-                            EscapeInterpMode::Hex => {
-                                if chars_remaining == 0 || !c.is_digit(16) {
-                                    let new_c = u8::from_str_radix(&num_buf, 16).expect("failed to convert characters into number!");
-                                    print!("{}", new_c as char);
-                                    num_buf.clear();
-                                    esc_interp_mode = EscapeInterpMode::Normal;
-                                } else {
-                                    num_buf.push(c);
-                                    chars_remaining -= 1;
-                                }
-                            },
-                            EscapeInterpMode::Oct => {
-                                if chars_remaining == 0 || !c.is_digit(8) {
-                                    let new_c = u8::from_str_radix(&num_buf, 8).expect("failed to convert characters into number!");
-                                    print!("{}", new_c as char); 
-                                    num_buf.clear();
-                                    esc_interp_mode = EscapeInterpMode::Normal;
-                                } else {
-                                    num_buf.push(c);
-                                    chars_remaining -= 1;
-                                }
-                            }
+                            EscapeInterpMode::Normal => esc_interp_mode_normal(&mut esc_interp_mode, c),
+                            EscapeInterpMode::Escape => esc_interp_mode_escape(&mut esc_interp_mode, c, &mut chars_remaining), 
+                            EscapeInterpMode::Hex =>  esc_interp_mode_hex(&mut esc_interp_mode, c, &mut chars_remaining, &mut num_buf),
+                            EscapeInterpMode::Oct => esc_interp_mode_oct(&mut esc_interp_mode, c, &mut chars_remaining, &mut num_buf),
                         }
                     }
                     if esc_interp_mode == EscapeInterpMode::Hex{
