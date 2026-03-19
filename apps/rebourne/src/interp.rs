@@ -110,6 +110,16 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
                 }
             }
         },
+        AstNode::EnvVarSet(var, val) => {
+            let var_name = interp_ast(var, true).1;
+            let val_val = interp_ast(val, true).1;
+       
+            unsafe {
+                set_var(var_name, val_val);
+            }
+
+            (1, "".to_string())
+        }
     }
 }
 

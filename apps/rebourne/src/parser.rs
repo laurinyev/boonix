@@ -3,6 +3,7 @@ enum LexToken {
     Word(String),
     Newline,
     Semicolon,
+    Eq,
     And,
     Bg,
     Or,
@@ -16,12 +17,14 @@ pub enum AstNode {
     Command(Box<AstNode>,Vec<AstNode>),
     And(Box<AstNode>,Box<AstNode>),
     Or(Box<AstNode>,Box<AstNode>),
+    EnvVarSet(Box<AstNode>,Box<AstNode>),
     ParseEnd,
 }
 
 pub enum LexerMode {
     Normal,
-    Comment
+    Comment,
+    Qoute
 }
 
 fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
@@ -59,17 +62,23 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         flush_buf(&mut tokens, &mut buffer);
                         tokens.push(LexToken::Semicolon);
                     },
+                    '=' => {
+                        flush_buf(&mut tokens, &mut buffer);
+                        tokens.push(LexToken::Eq);
+                    },
                     '#' => {
                         if buffer.len() == 0 {
                             lexer_mode = LexerMode::Comment;
                         } else {
                             buffer.push(c);
                         }
+                    },
+                    '"' =>{
+                        lexer_mode = LexerMode::Qoute;
                     }
                     _ => {
                         buffer.push(c);
                     }
-
                 }       
             }, 
             LexerMode::Comment => {
@@ -79,6 +88,16 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         tokens.push(LexToken::Newline);
                     },
                     _ => ()
+                }
+            },
+            LexerMode::Qoute => {
+                match c {
+                    '"' =>{
+                        lexer_mode = LexerMode::Normal;
+                    }
+                    _ => {
+                        buffer.push(c);
+                    }
                 }
             }
         }
@@ -127,10 +146,21 @@ fn parse_expr(peeker: &mut Peeker) -> AstNode{
 
 fn parse_command (peeker: &mut Peeker) -> AstNode {
     let command = parse_expr(peeker);
+    
     if command == AstNode::ParseEnd {
         return AstNode::ParseEnd;
     }
+    
+    if peeker.peek(0) == LexToken::Eq{
+        peeker.consume();
+        let val = parse_expr(peeker);
 
+        return AstNode::Sequence(vec![
+            AstNode::EnvVarSet(Box::new(command), Box::new(val)),
+            parse_command(peeker)
+        ])
+    }
+    
     let mut args: Vec<AstNode> = vec![];
 
     loop {
@@ -161,6 +191,7 @@ fn parse_command_expr (peeker: &mut Peeker) -> AstNode{
         } else if next == LexToken::Semicolon || next == LexToken::Newline|| next == LexToken::EOF {
             return expr;
         } else {
+            
             let command = parse_command(peeker);  
             if command == AstNode::ParseEnd {
                 return expr;
