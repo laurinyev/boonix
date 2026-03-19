@@ -12,14 +12,7 @@ fn print_prompt() {
             print!("{}",v);
         },
         Err(..) => {
-            match var("PWD") {
-                Ok(v) => {
-                    print!("{}> ",v);
-                },
-                Err(..) => {
-                    print!("> ");
-                }
-            } 
+            print!("{}> ",current_dir().unwrap().display());
         }
     } 
     stdout().flush().unwrap();
