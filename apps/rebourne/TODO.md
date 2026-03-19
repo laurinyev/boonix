@@ -3,9 +3,8 @@
 * asterisk, tilde and variable expansion
 * redirection operators
 * backgrounding(`command &`)
-* script execution
-* startup script execution(`~/.rbrc`, `~/.bashrc`,`~/.profile`, `/etc/rbrc` and `/etc/bashrc` fallback)
-* qoutation and double qoutation support
+* better startup script execution(`~/.rbrc`, `~/.bashrc`,`~/.profile`, `/etc/rbrc` and `/etc/bashrc` fallback)
+* qoutation support
 * escaping support
 * pretty PS1 stuff
 
