@@ -21,10 +21,13 @@ pub enum AstNode {
     ParseEnd,
 }
 
+#[derive(PartialEq,Clone, Copy)]
 pub enum LexerMode {
     Normal,
     Comment,
-    Qoute
+    Escape,
+    Qoute,
+    DQoute
 }
 
 fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
@@ -46,6 +49,7 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     let mut tokens: Vec<LexToken> = vec![]; 
     let mut buffer = String::new();
     let mut lexer_mode = LexerMode::Normal;
+    let mut last_mode = LexerMode::Normal;
 
     for c in cmd.chars() {
         match lexer_mode {
@@ -56,7 +60,10 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                     },
                     '\n' => {
                         flush_buf(&mut tokens, &mut buffer); 
-                        tokens.push(LexToken::Newline);
+                        //when duplicate newlines fuck with your parser, you just have to get a li'l crafty
+                        if tokens.last() != Some(&LexToken::Newline) {
+                            tokens.push(LexToken::Newline);
+                        }
                     },
                     ';' => {
                         flush_buf(&mut tokens, &mut buffer);
@@ -73,9 +80,16 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                             buffer.push(c);
                         }
                     },
-                    '"' =>{
+                    '\'' =>{
                         lexer_mode = LexerMode::Qoute;
-                    }
+                    },
+                    '"' =>{
+                        lexer_mode = LexerMode::DQoute;
+                    },
+                    '\\' => {
+                        lexer_mode = LexerMode::Escape;
+                        last_mode = LexerMode::Normal;
+                    },
                     _ => {
                         buffer.push(c);
                     }
@@ -87,18 +101,60 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         lexer_mode = LexerMode::Normal;
                         tokens.push(LexToken::Newline);
                     },
+                    
                     _ => ()
                 }
             },
             LexerMode::Qoute => {
                 match c {
-                    '"' =>{
+                    '\'' =>{
                         lexer_mode = LexerMode::Normal;
-                    }
+                    },
+                    '\\' => {
+                        lexer_mode = LexerMode::Escape;
+                        last_mode = LexerMode::Qoute;
+                    },
                     _ => {
                         buffer.push(c);
                     }
                 }
+            },
+            LexerMode::DQoute => {
+                match c {
+                    '"' =>{
+                        lexer_mode = LexerMode::Normal;
+                    },
+                    '\\' => {
+                        lexer_mode = LexerMode::Escape;
+                        last_mode = LexerMode::DQoute;
+                    },
+                    _ => {
+                        buffer.push(c);
+                    }
+                }
+            },
+            LexerMode::Escape => {
+                if last_mode == LexerMode::Normal {
+                    buffer.push(c);
+                } else {
+                    match c {
+                        '\\' => buffer.push('\\'),
+                        'a' => buffer.push('\x07'),
+                        'b' => buffer.push('\x09'),
+                        'e' => buffer.push('\x1B'),
+                        'f' => buffer.push('\x0C'),
+                        'n' => buffer.push('\n'),
+                        'r' => buffer.push('\r'),
+                        't' => buffer.push('\t'),
+                        'v' => buffer.push('\x0B'),
+                        _ => {
+                            buffer.push('\\');
+                            buffer.push(c)
+                        }, 
+                    }        
+                }
+                
+                lexer_mode = last_mode;
             }
         }
     }
