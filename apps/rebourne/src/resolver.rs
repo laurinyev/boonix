@@ -3,7 +3,7 @@ use std::{
     fs::*,
     path::*
 };
-const PATH_SEP: &str = if cfg!(any(target_os = "windows", feature = "semi_path_sep")) { ";" } else { ":" };
+const PATH_SEP: &str = if cfg!(any(target_os = "windows", feature = "safaos")) { ";" } else { ":" };
 
 static mut PATHS : Vec<String> = Vec::new();
 

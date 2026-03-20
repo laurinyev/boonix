@@ -6,4 +6,6 @@ edition = "2024"
 [dependencies]
 
 [features]
-semi_path_sep = []
+safaos = []
+debug_parser = []
+debug_interp= []

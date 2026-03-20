@@ -283,7 +283,10 @@ fn parse_sequence(mut peeker: Peeker) -> AstNode{
 
 pub fn parse<'a>(cmd: &'a str) -> AstNode {
     let lexed = lex(cmd);
+    
+    #[cfg(feature = "debug_parser")]
     println!("{lexed:?}");
+    
     let peeker = Peeker::new(lexed);
 
     return parse_sequence(peeker);

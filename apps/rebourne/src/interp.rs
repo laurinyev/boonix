@@ -125,8 +125,11 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
 
 pub fn run(cmd: &str) -> u32 {
     let root = parse(cmd);
+
+    #[cfg(feature = "debug_interp")]
     println!("{:?}",root);
-    println!("Exit code: {}",interp_ast(&root,false).0);
+    
+    interp_ast(&root,false);
     
     return 0;
 }
