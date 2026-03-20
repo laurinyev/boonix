@@ -1,6 +1,7 @@
 mod whoami; 
 mod ls; 
 mod yes; 
+mod env; 
 mod echo; 
 mod symlink; 
 
@@ -28,6 +29,7 @@ fn main() {
     utils.insert("ls", Box::new(ls::run));
     utils.insert("symlink", Box::new(symlink::run));
     utils.insert("yes", Box::new(yes::run));
+    utils.insert("env", Box::new(env::run));
     utils.insert("echo", Box::new(echo::run));
     utils.insert("whoami", Box::new(whoami::run));
 
