@@ -16,7 +16,68 @@ fn semi_echo() {
 fn multiline_echo() {
     assert_eq!(run("echo \"Werx\"\necho \"Other line too!\""), (0, "Werx\nOther line too!\n".to_string()));
 }
+
 #[test]
 fn looong_semi() {
     assert_eq!(run("echo \"a\"; echo \"s\"; echo \"d\"; echo \"f\"; echo \"g\"; echo \"h\""), (0, "a\ns\nd\nf\ng\nh\n".to_string()));
+}
+
+#[test]
+fn true_and() {
+    assert_eq!(run("true && echo \"H\""), (0, "H\n".to_string()));
+}
+
+#[test]
+fn false_and() {
+    assert_eq!(run("false && echo \"H\""), (1, "".to_string()));
+}
+
+#[test]
+fn true_or() {
+    assert_eq!(run("true || echo \"H\""), (0, "".to_string()));
+}
+
+#[test]
+fn false_or() {
+    assert_eq!(run("false || echo \"H\""), (0, "H\n".to_string()));
+}
+
+#[test]
+fn true_and_split1() {
+    assert_eq!(run("true \n && echo \"H\""), (0, "H\n".to_string()));
+}
+
+#[test]
+fn false_and_split1() {
+    assert_eq!(run("false \n && echo \"H\""), (1, "".to_string()));
+}
+
+#[test]
+fn true_or_split1() {
+    assert_eq!(run("true \n || echo \"H\""), (0, "".to_string()));
+}
+
+#[test]
+fn false_or_split1() {
+    assert_eq!(run("false \n || echo \"H\""), (0, "H\n".to_string()));
+}
+
+#[test]
+fn true_and_split2() {
+    assert_eq!(run("true && \n echo \"H\""), (0, "H\n".to_string()));
+}
+
+#[test]
+fn false_and_split2() {
+    assert_eq!(run("false && \n echo \"H\""), (1, "".to_string()));
+}
+
+#[test]
+fn true_or_split2() {
+    assert_eq!(run("true || \n echo \"H\""), (0, "".to_string()));
+}
+
+#[test]
+fn false_or_split2() {
+    assert_eq!(run("false || \n echo \"H\""), (0, "H\n".to_string()));
 }

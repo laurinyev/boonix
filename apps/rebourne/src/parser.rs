@@ -238,16 +238,30 @@ fn parse_command_expr (peeker: &mut Peeker) -> AstNode{
         let next = peeker.peek(0);
         if next == LexToken::And {
             peeker.consume();
+            
+            //since ands are splittable, we have to get rid of newlines here
+            if peeker.peek(0) == LexToken::Newline { peeker.consume(); }
+            
             let command = parse_command(peeker);
             expr = AstNode::And(Box::new(expr), Box::new(command)); 
         } else if next == LexToken::Or {
             peeker.consume();
+           
+            //since ands are splittable, we have to get rid of newlines here
+            if peeker.peek(0) == LexToken::Newline { peeker.consume(); }
+            
             let command = parse_command(peeker);
             expr = AstNode::Or(Box::new(expr), Box::new(command)); 
-        } else if next == LexToken::Semicolon || next == LexToken::Newline|| next == LexToken::EOF {
+        } else if next == LexToken::Semicolon || next == LexToken::EOF {
+            peeker.consume();
             return expr;
+        } else if next == LexToken::Newline {
+            peeker.consume();
         } else {
-            
+            if expr != AstNode::ParseEnd{
+                return expr;
+            } 
+
             let command = parse_command(peeker);  
             if command == AstNode::ParseEnd {
                 return expr;
@@ -267,13 +281,8 @@ fn parse_sequence(mut peeker: Peeker) -> AstNode{
         if cmdexpr == AstNode::ParseEnd {
             break;
         } else {
-            let next = peeker.peek(0); 
-
-            if next == LexToken::Semicolon || next == LexToken::Newline {
-                nodes.push(cmdexpr);
-                peeker.consume();
-            } else if next == LexToken::EOF {
-                nodes.push(cmdexpr);
+            nodes.push(cmdexpr);
+            if peeker.peek(0) == LexToken::EOF {
                 break;
             }
         }
