@@ -273,6 +273,7 @@ fn parse_sequence(mut peeker: Peeker) -> AstNode{
                 nodes.push(cmdexpr);
                 peeker.consume();
             } else if next == LexToken::EOF {
+                nodes.push(cmdexpr);
                 break;
             }
         }
