@@ -81,3 +81,14 @@ fn true_or_split2() {
 fn false_or_split2() {
     assert_eq!(run("false || \n echo \"H\""), (0, "H\n".to_string()));
 }
+
+#[test]
+fn escape1() {
+    assert_eq!(run("echo hello \\\nworld"), (0, "hello \nworld\n".to_string()));
+}
+
+#[test]
+fn escape2() {
+    assert_eq!(run("echo cat \\&\\& meow"), (0, "cat && meow\n".to_string()));
+}
+

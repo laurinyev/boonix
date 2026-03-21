@@ -30,15 +30,15 @@ pub enum LexerMode {
     DQoute
 }
 
-fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
+fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String, symbols: bool) {
     if buffer.len() < 1 {
         return;
     }
 
     match buffer.as_str() {
-        "&&" => tokens.push(LexToken::And),
-        "&" => tokens.push(LexToken::Bg),
-        "||" => tokens.push(LexToken::Or),
+        "&&" if symbols => tokens.push(LexToken::And),
+        "||" if symbols=> tokens.push(LexToken::Or),
+        "&"  if symbols => tokens.push(LexToken::Bg),
         _    => tokens.push(LexToken::Word(buffer.clone()))
     }
 
@@ -47,7 +47,8 @@ fn flush_buf(tokens: &mut Vec<LexToken>, buffer: &mut String) {
 
 fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
     let mut tokens: Vec<LexToken> = vec![]; 
-    let mut buffer = String::new();
+    let mut word_buffer = String::new();
+    let mut misc_buffer = String::new();
     let mut lexer_mode = LexerMode::Normal;
     let mut last_mode = LexerMode::Normal;
 
@@ -56,28 +57,32 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
             LexerMode::Normal => {
                  match c {
                     ' ' => {
-                        flush_buf(&mut tokens, &mut buffer); 
+                        flush_buf(&mut tokens, &mut word_buffer, false); 
+                        flush_buf(&mut tokens, &mut misc_buffer, true); 
                     },
                     '\n' => {
-                        flush_buf(&mut tokens, &mut buffer); 
+                        flush_buf(&mut tokens, &mut word_buffer, false); 
+                        flush_buf(&mut tokens, &mut misc_buffer, true); 
                         //when duplicate newlines fuck with your parser, you just have to get a li'l crafty
                         if tokens.last() != Some(&LexToken::Newline) {
                             tokens.push(LexToken::Newline);
                         }
                     },
                     ';' => {
-                        flush_buf(&mut tokens, &mut buffer);
+                        flush_buf(&mut tokens, &mut word_buffer, false); 
+                        flush_buf(&mut tokens, &mut misc_buffer, true);
                         tokens.push(LexToken::Semicolon);
                     },
                     '=' => {
-                        flush_buf(&mut tokens, &mut buffer);
+                        flush_buf(&mut tokens, &mut word_buffer, false); 
+                        flush_buf(&mut tokens, &mut misc_buffer, true);
                         tokens.push(LexToken::Eq);
                     },
                     '#' => {
-                        if buffer.len() == 0 {
+                        if word_buffer.len() == 0 && misc_buffer.len() == 0 {
                             lexer_mode = LexerMode::Comment;
                         } else {
-                            buffer.push(c);
+                            word_buffer.push(c);
                         }
                     },
                     '\'' =>{
@@ -90,8 +95,14 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         lexer_mode = LexerMode::Escape;
                         last_mode = LexerMode::Normal;
                     },
+                    '&' => {
+                        misc_buffer.push(c);
+                    },
+                    '|' => {
+                        misc_buffer.push(c);
+                    },
                     _ => {
-                        buffer.push(c);
+                        word_buffer.push(c);
                     }
                 }       
             }, 
@@ -115,7 +126,7 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         last_mode = LexerMode::Qoute;
                     },
                     _ => {
-                        buffer.push(c);
+                       word_buffer.push(c);
                     }
                 }
             },
@@ -129,27 +140,27 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                         last_mode = LexerMode::DQoute;
                     },
                     _ => {
-                        buffer.push(c);
+                        word_buffer.push(c);
                     }
                 }
             },
             LexerMode::Escape => {
                 if last_mode == LexerMode::Normal {
-                    buffer.push(c);
+                    word_buffer.push(c);
                 } else {
                     match c {
-                        '\\' => buffer.push('\\'),
-                        'a' => buffer.push('\x07'),
-                        'b' => buffer.push('\x09'),
-                        'e' => buffer.push('\x1B'),
-                        'f' => buffer.push('\x0C'),
-                        'n' => buffer.push('\n'),
-                        'r' => buffer.push('\r'),
-                        't' => buffer.push('\t'),
-                        'v' => buffer.push('\x0B'),
+                        '\\' => word_buffer.push('\\'),
+                        'a' => word_buffer.push('\x07'),
+                        'b' => word_buffer.push('\x09'),
+                        'e' => word_buffer.push('\x1B'),
+                        'f' => word_buffer.push('\x0C'),
+                        'n' => word_buffer.push('\n'),
+                        'r' => word_buffer.push('\r'),
+                        't' => word_buffer.push('\t'),
+                        'v' => word_buffer.push('\x0B'),
                         _ => {
-                            buffer.push('\\');
-                            buffer.push(c)
+                            word_buffer.push('\\');
+                            word_buffer.push(c)
                         }, 
                     }        
                 }
@@ -159,8 +170,9 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
         }
     }
 
-    if buffer.len() > 0 {
-        flush_buf(&mut tokens, &mut buffer);
+    if word_buffer.len() > 0 || misc_buffer.len() > 0 {
+        flush_buf(&mut tokens, &mut word_buffer, false); 
+        flush_buf(&mut tokens, &mut misc_buffer, true);
     }
 
     return tokens;
