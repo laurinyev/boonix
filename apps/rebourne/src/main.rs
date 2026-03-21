@@ -7,6 +7,9 @@ mod parser;
 mod interp;
 mod repl;
 
+#[cfg(test)]
+mod tests;
+
 fn exec_script(path: &Path) {
     if !path.exists() {
         eprintln!("\"{}\" doesn't exist",path.display());

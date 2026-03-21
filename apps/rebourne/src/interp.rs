@@ -86,14 +86,14 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
 
                     child.args(args.iter().map(|a| interp_ast(a, true).1));
                     
-                    if !is_nested {
+                    if !is_nested && !cfg!(test) {
                         child.stdin(Stdio::inherit());
                         child.stdout(Stdio::inherit());
                         child.stderr(Stdio::inherit());
                     }
 
                     let out = child.output(); 
-                    if is_nested {
+                    if is_nested || cfg!(test) {
                         match out {
                             Ok(o) => match String::from_utf8(o.stdout) {
                                     Ok(s) => (o.status.code().unwrap_or(1),s),
@@ -123,13 +123,11 @@ fn interp_ast<'a>(node: &AstNode, is_nested: bool) -> (i32, String){
     }
 }
 
-pub fn run(cmd: &str) -> u32 {
+pub fn run(cmd: &str) -> (i32, String) {
     let root = parse(cmd);
 
     #[cfg(feature = "debug_interp")]
     println!("{:?}",root);
     
-    interp_ast(&root,false);
-    
-    return 0;
+    return interp_ast(&root,false);
 }
