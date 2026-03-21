@@ -7,4 +7,4 @@ This works on:
 * [X] Android(last tested: 2026. march 17)
 * [ ] FreeBSD
 * [ ] NetBSD
-* [X] SafaOS(last tested: 2026. march 17; commit 09004b4)
+* [X] SafaOS(last tested: 2026. march 21; commit `b870172c16ae7d7e731159ff38aa5842a6f975e7`)
