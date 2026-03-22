@@ -94,12 +94,12 @@ fn escape2() {
 
 #[test]
 fn qoute_escape() {
-    assert_eq!(run("echo '\\a\\b\\e\\f\\n\\r\\t\\v'"), (0, "\x07\t\x1B\x0C\n\r\t\x0B\n".to_string()));
+    assert_eq!(run("echo '\\a\\b\\e\\f\\n\\r\\t\\v\\'\\w'"), (0, "\x07\x08\x1B\x0C\n\r\t\x0B'\\w\n".to_string()));
 }
 
 #[test]
 fn dqoute_escape() {
-    assert_eq!(run("echo \"\\a\\b\\e\\f\\n\\r\\t\\v\""), (0, "\x07\t\x1B\x0C\n\r\t\x0B\n".to_string()));
+    assert_eq!(run("echo \"\\a\\b\\e\\f\\n\\r\\t\\v\\\"\\w\""), (0, "\x07\x08\x1B\x0C\n\r\t\x0B\"\\w\n".to_string()));
 }
 
 

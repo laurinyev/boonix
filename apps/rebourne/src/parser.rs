@@ -145,13 +145,15 @@ fn lex<'a>(cmd: &'a str) -> Vec<LexToken> {
                 }
             },
             LexerMode::Escape => {
-                if last_mode == LexerMode::Normal {
+                if last_mode == LexerMode::Normal ||
+                        (last_mode == LexerMode::Qoute && c == '\'') ||
+                        (last_mode == LexerMode::DQoute && c == '"') {
                     word_buffer.push(c);
                 } else {
                     match c {
                         '\\' => word_buffer.push('\\'),
                         'a' => word_buffer.push('\x07'),
-                        'b' => word_buffer.push('\x09'),
+                        'b' => word_buffer.push('\x08'),
                         'e' => word_buffer.push('\x1B'),
                         'f' => word_buffer.push('\x0C'),
                         'n' => word_buffer.push('\n'),
