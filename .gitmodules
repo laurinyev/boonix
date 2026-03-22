@@ -1,3 +1,6 @@
 [submodule "kernel/src/third_party/Flanterm"]
 	path = kernel/src/third_party/Flanterm
 	url = https://codeberg.org/Mintsuki/Flanterm
+[submodule "apps/rebourne"]
+	path = apps/rebourne
+	url = https://github.com/laurinyev/rebourne
