@@ -38,7 +38,7 @@ Inside qoutes, escape sequences(backslash + single character) turn into an untyp
 * `f` -> ASCII `FF`  character
 * `n` -> ASCII `LF`  character
 * `r` -> ASCII `CR`  character
-* `r` -> ASCII `TAB` character
+* `t` -> ASCII `TAB` character
 * `v` -> ASCII `VT`  character
 
 The matching qoute(`'` if in Qoute mode, `"` if in DQoute mode) character will print it literally, and any other combination will print both the backslash and the character.
