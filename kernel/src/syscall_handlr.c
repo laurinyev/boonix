@@ -22,7 +22,9 @@ uint64_t sys_mmap (registers_syscall_t* args){
 //single tasking approximation of yield behaviour + starting the first proc from kernelspace
 uint64_t sys_yield(registers_syscall_t* args){
     if (current_proc == 0xFFFFFFFF){
-        switch_to_proc(process_count - 1);
+        switch_to_proc(process_count - 1, true);
+    } else {
+        switch_to_proc(current_proc, false);
     }
     return 0; 
 }

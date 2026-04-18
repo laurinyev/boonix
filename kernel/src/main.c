@@ -27,7 +27,7 @@ void test_proc() {
 void spawn_test_proc() {
     uint32_t proc_id  = create_process();
     process_t* proc   = &process_stack[proc_id];
-    registers_t* regs = &proc->main_thread.regs;
+    registers_t* regs = &proc->regs;
     
     pagemap_t pm = get_cur_pagemap();
     uintptr_t test_proc_virt = find_avail_blocks(proc->pagemap,1);
@@ -38,6 +38,7 @@ void spawn_test_proc() {
     regs->rip = test_proc_virt + (((uint64_t)&test_proc) & 0xfff); 
     regs->cs  = 0x08; 
     regs->ss  = 0x10; 
+    wrmsr(MSR_IA32_GS_BASE, (uint64_t)proc);
 }
 
 void kmain(void) {
@@ -74,6 +75,6 @@ void kmain(void) {
     kprintf("Thank you %s <3\n","Nekodev");
     spawn_test_proc();
 
-    switch_to_proc(process_count - 1);
+    switch_to_proc(process_count - 1, true);
     hcf();
 }

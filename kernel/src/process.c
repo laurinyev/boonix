@@ -16,7 +16,7 @@ uint32_t create_process() {
     process_t* new_ptr = &process_stack[new_id];
 
     new_ptr->pagemap = create_pagemap();
-    new_ptr->main_thread.regs = (registers_t){0};
+    new_ptr->regs = (registers_t){0};
 
     uintptr_t stack_addr = find_avail_blocks(new_ptr->pagemap, STACK_SIZE);
     uintptr_t kernel_stack_addr = find_avail_blocks(new_ptr->pagemap, KERNEL_STACK_SIZE);
@@ -37,126 +37,90 @@ uint32_t create_process() {
 
     new_ptr->kernel_stack = kernel_stack_addr + KERNEL_STACK_SIZE*PAGE_SIZE;
     
-    new_ptr->main_thread.regs.rsp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
-    new_ptr->main_thread.regs.rbp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
+    new_ptr->regs.rsp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
+    new_ptr->regs.rbp = (uint64_t)stack_addr + STACK_SIZE*PAGE_SIZE;
     
     //TODO: add handles
 
     return new_id;
 }
 
-uint32_t switch_to_proc(uint32_t proc_id) {
-    if (proc_id >= MAX_PROC){
-        return 1; // TODO: error code
-    }
+void switch_curr_proc(uint32_t proc_id) {
     process_t* proc_ptr = &process_stack[proc_id];
     
-    if (current_proc != 0xFFFFFFFF){
-        process_t* curr = &process_stack[current_proc];
-        registers_t* r = &curr->main_thread.regs;
-
-        asm volatile(
-            "mov %%rax, %0\n"
-            "mov %%rcx, %1\n"
-            "mov %%rdx, %2\n"
-            "mov %%rbx, %3\n"
-            "mov %%rbp, %4\n"
-            "mov %%rsi, %5\n"
-            "mov %%rdi, %6\n"
-            "mov %%r8,  %7\n"
-            "mov %%r9,  %8\n"
-            "mov %%r10, %9\n"
-            "mov %%r11, %10\n"
-            "mov %%r12, %11\n"
-            "mov %%r13, %12\n"
-            "mov %%r14, %13\n"
-            "mov %%r15, %14\n"
-            "mov %%rsp, %15\n"
-            "pushfq\n"
-            "pop %16\n"
-            : "=m"(r->rax), "=m"(r->rcx), "=m"(r->rdx), "=m"(r->rbx),
-              "=m"(r->rbp), "=m"(r->rsi), "=m"(r->rdi),
-              "=m"(r->r8), "=m"(r->r9), "=m"(r->r10), "=m"(r->r11),
-              "=m"(r->r12), "=m"(r->r13), "=m"(r->r14), "=m"(r->r15),
-              "=m"(r->rsp), "=m"(r->rflags)
-            :
-            : "memory"
-        );
-        
-        curr->main_thread.regs.cs = 0x08; //kernel CS
-        curr->main_thread.regs.ss = 0x10; //kernel SS  
-        curr->main_thread.regs.rip = (uint64_t)&&return_addr; //GNU EXTENSION: takng the address of a label 
-    }
-
     current_proc = proc_id;
     wrmsr(MSR_IA32_GS_BASE, (uint64_t)proc_ptr);
-
-    registers_t* r = &proc_ptr->main_thread.regs;
-
-    asm volatile(
-        "push %0\n"
-        "push %1\n"
-        "push %2\n"
-        "push %3\n"
-        "push %4\n"
-        "push %5\n"
-        "push %6\n"
-        "push %7\n"
-        "push %8\n"
-        "push %9\n"
-        "push %10\n"
-        "push %11\n"
-        "push %12\n"
-        "push %13\n"
-        "push %14\n"
-        
-        "pop %%r15\n"
-        "pop %%r14\n"
-        "pop %%r13\n"
-        "pop %%r12\n"
-        "pop %%r11\n"
-        "pop %%r10\n"
-        "pop %%r9 \n"
-        "pop %%r8 \n"
-        "pop %%rdi\n"
-        "pop %%rsi\n"
-        "pop %%rbp\n"
-        "pop %%rbx\n"
-        "pop %%rdx\n"
-        "pop %%rcx\n"
-        "pop %%rax\n"
-        :
-        : "r"(r->rax), "r"(r->rcx), "r"(r->rdx), "r"(r->rbx),
-          "r"(r->rbp), "r"(r->rsi), "r"(r->rdi),
-          "r"(r->r8),  "r"(r->r9),  "r"(r->r10), "r"(r->r11),
-          "r"(r->r12), "r"(r->r13), "r"(r->r14), "r"(r->r15)
-        : "memory"/*, "rax", "rcx", "rdx",
-          "rbx",    "rbp", "rsi", "rdi", 
-          "r8" ,    "r9" , "r10", "r11",
-          "r12",    "r13", "r14", "r15"*/ // The compiler doesn't have to know...
-    );
-    
     set_cur_pagemap(proc_ptr->pagemap);
+}
 
-    //NOTE: process may jump to userspace as its first switch 
+__attribute__((naked)) uint32_t switch_to_proc(uint32_t proc_id,bool first_switch) {
     asm volatile(
-        "mov %0, %%rsp\n"
-        "push %1\n"
-        "push %2\n"
-        "push %3\n"
-        "push %4\n"
-        "push %5\n"
-        "iretq\n"
+        "cmpq $0x00, %%rsi\n"
+        "jne .post_save\n"
+        "pop %%gs:0x98\n" // the return address
+        "mov %%r15, %%gs:0x10\n"
+        "mov %%r14, %%gs:0x18\n"
+        "mov %%r13, %%gs:0x20\n"
+        "mov %%r12, %%gs:0x28\n"
+        "mov %%r11, %%gs:0x30\n"
+        "mov %%r10, %%gs:0x38\n"
+        "mov %%r9 , %%gs:0x40\n"
+        "mov %%r8 , %%gs:0x48\n"
+        "mov %%rdi, %%gs:0x50\n"
+        "mov %%rsi, %%gs:0x58\n"
+        "mov %%rbp, %%gs:0x60\n"
+        "mov %%rbx, %%gs:0x68\n"
+        "mov %%rdx, %%gs:0x70\n"
+        "mov %%rcx, %%gs:0x78\n"
+        "mov %%rax, %%gs:0x80\n"
+        "mov %%rsp, %%gs:0xB0\n"
+        ".post_save:\n"
+
+        "pushfq\n"
+        "pop %%gs:0xA8\n" // GS + 0xA8 = rflags
+        // mov %rdi, %rdi <-- unneeded lmao
+        "call switch_curr_proc\n"
+
+        "mov %%gs:0x10, %%r15\n"
+        "mov %%gs:0x18, %%r14\n"
+        "mov %%gs:0x20, %%r13\n"
+        "mov %%gs:0x28, %%r12\n"
+        "mov %%gs:0x30, %%r11\n"
+        "mov %%gs:0x38, %%r10\n"
+        "mov %%gs:0x40, %%r9 \n"
+        "mov %%gs:0x48, %%r8 \n"
+        "mov %%gs:0x50, %%rdi\n"
+        "mov %%gs:0x58, %%rsi\n"
+        "mov %%gs:0x60, %%rbp\n"
+        "mov %%gs:0x68, %%rbx\n"
+        "mov %%gs:0x70, %%rdx\n"
+        "mov %%gs:0x78, %%rcx\n"
+        "mov %%gs:0x80, %%rax\n"
+        "mov %%gs:0xB0, %%rsp\n"
+        
+        // a first switch is a special case where iretq needs extra arguments
+        "cmpq $0x18, %%gs:0xA0\n" // 0x18 = user code segment, GS + 0xA0 = code segment
+        "jne .not_first_sw\n"
+        
+        "push %%gs:0xB8\n" // GS + 0xB8 = stack segment
+        "movq $0x10, %%gs:0xB8\n" // all subsequents switches will be from kernel mode
+        "push %%gs:0xB0\n" // GS + 0xB0 = stack pointer
+        "push %%gs:0xA8\n" // GS + 0xA8 = rflags
+        "push %%gs:0xA0\n" // GS + 0xA0 = code segment
+        "movq $0x08, %%gs:0xA0\n" // all subsequents switches will be from kernel mode
+        "push %%gs:98\n" // GS + 0x98 = RIP
+        "jmp .ret_instr\n"
+        
+        ".not_first_sw:\n"
+        "push %%gs:0xA8\n" // GS + 0xA8 = rflags
+        "push %%gs:0xA0\n" // GS + 0xA0 = code segment
+        "movq $0x08, %%gs:0xA0\n" // all subsequents switches will be from kernel mode
+        "push %%gs:0x98\n" // GS + 0x98 = RIP
+
+        ".ret_instr:\n"
+        "iretq" 
         :
-        : "m"(r->rsp),
-          "m"(r->ss),
-          "m"(r->rsp),
-          "m"(r->rflags),
-          "m"(r->cs),
-          "m"(r->rip)
+        : 
         : "memory"
     );
-
-    return_addr: 
-    return 0; 
 }

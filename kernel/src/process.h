@@ -10,19 +10,15 @@
 #define MAX_PROC 128 
 
 typedef struct {
-    registers_t regs; 
-} thread_t;
-
-typedef struct {
     bool exists;
 } handle_t;
 
 typedef struct {
     uint64_t kernel_stack;
     uint64_t saved_stack;
+    registers_t regs; 
     pagemap_t pagemap;
     handle_t handles[MAX_HANDLES]; 
-    thread_t main_thread;
 } process_t;
 
 extern process_t process_stack[MAX_PROC];
@@ -30,6 +26,6 @@ extern uint32_t  process_count;
 extern uint32_t  current_proc;
 
 uint32_t create_process();
-uint32_t switch_to_proc(uint32_t proc_id);
+uint32_t switch_to_proc(uint32_t proc_id,bool first_sw);
 
 #endif //PROCESS_H
