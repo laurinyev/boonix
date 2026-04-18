@@ -96,7 +96,6 @@ __attribute__((naked)) uint32_t switch_to_proc(uint32_t proc_id,bool first_switc
         "mov %%gs:0x70, %%rdx\n"
         "mov %%gs:0x78, %%rcx\n"
         "mov %%gs:0x80, %%rax\n"
-        "mov %%gs:0xB0, %%rsp\n"
         
         // a first switch is a special case where iretq needs extra arguments
         "cmpq $0x18, %%gs:0xA0\n" // 0x18 = user code segment, GS + 0xA0 = code segment
